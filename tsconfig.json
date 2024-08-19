@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		// Since building a library need these, won't actually be writing typescript, just jsdoc with typescript types
+		"allowJs": true,
+		"checkJs": true,
+		"strict": true,
+
+		// how to handle import/export
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+
+		// what version of ECMAScript to compile ts to typescript
+		"target": "ES2023",
+
+		"typeRoots": ["./node_modules/@types", "./src/types"],
+
+		"sourceMap": true,
+
+		// "sourceMap": true,
+		"outDir": "./dist"
+	},
+	"include": ["src/**/*", "src/**/*.d.ts"]
+}
