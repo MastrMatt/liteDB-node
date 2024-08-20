@@ -11,3 +11,5 @@ export const SER_VALUES = {
 	SER_FLOAT: 4,
 	SER_ARR: 5,
 };
+
+export const CMDQUEUEMAXSIZE = 100;

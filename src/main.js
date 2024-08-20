@@ -18,15 +18,8 @@ import {
 } from "./protocol.js";
 
 /**
-	@typedef {Object} ClientOptions
-	@property {string} host
-	@property {number} port
-*/
-
-/**
- * @typedef {Object} RecvData
- * @property {number} type
- * @property {number | string | Array<any>} [value]
+ * @typedef {import('./types.d.ts').ClientOptions} ClientOptions
+ * @typedef {import('./types.d.ts').RecvData} RecvData
  */
 
 /**
