@@ -5,27 +5,20 @@
 // 5) don't forgot to generate the .d.ts to support library users who use typescript
 // See how to store objects in the db, hashSet or a string as json.stringify?
 
-// ! Very important to record and handle errors properly, there is alot going on
+// ! Very important to record and handle errors properly, there is alot going on, do some more tommorow
 
-import {
-	MAX_MESSAGE_SIZE,
-	MAX_ARGS,
-	DEFAULT_SERVERPORT,
-	DEFAULT_SERVERIP,
-	SER_VALUES,
-} from "./protocol.js";
+import { DEFAULT_SERVERPORT, DEFAULT_SERVERIP } from "./protocol.js";
 
 import { EventEmitter } from "events";
 import { CommandQueue } from "./commandQueue.js";
-import { liteDBSocket } from "./liteDBSocket.js";
-import { processCommand } from "./commands.js";
+import { LiteDBSocket } from "./liteDBSocket.js";
+import { LiteDBDecoder } from "./decoder.js";
 
 /**
  * @typedef {import('./types.js').ClientOptions} ClientOptions
  * @typedef {import('./types.js').LiteDBCommand} LiteDBCommand
  * @typedef {import('./types.js').ConnectOptions} ConnectOptions
  * @typedef {import('./types.js').ResponseData} ResponseData
- * @typedef {import('./types.js').Response} Response
  */
 
 /**
@@ -44,9 +37,9 @@ class liteDBClient extends EventEmitter {
 	 */
 	constructor(clientOptions) {
 		super();
-		this.liteDBSocket = new liteDBSocket();
+		this.liteDBSocket = new LiteDBSocket();
 		this.commandQueue = new CommandQueue();
-		this.dataBuffer = Buffer.alloc(0);
+		this.decoder = new LiteDBDecoder();
 	}
 
 	/**
@@ -89,6 +82,32 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
+	 *  Ticks the command queue to send the next command to the server
+	 *
+	 * @returns {void}
+	 *
+	 */
+	tick() {
+		// if the socket write buffer is full and waiting for a drain event, return, dont want to potentially overflow the in-memory buffer queue since the kernel buffer is full
+		if (this.liteDBSocket.writableNeedDrain) {
+			return;
+		}
+
+		while (!this.liteDBSocket.writableNeedDrain) {
+			// get the next command to send
+			const nextCmd = this.commandQueue.getNextCommand();
+
+			// if there are no more commands to send, break out of the loop
+			if (!nextCmd) {
+				break;
+			}
+
+			// write the command to the server socket
+			this.liteDBSocket.writeCmd(nextCmd);
+		}
+	}
+
+	/**
 	 * Sends a command to the server and return a promise that resolves when the command is fully processed and contains the server responsee
 	 * @param {LiteDBCommand} cmd
 	 * @returns Promise<any> - The promise that will be resolved when the command if fully processed, it contains the server response
@@ -111,15 +130,14 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Process as many commands as possible from the data buffer and resolve thier promises
+	 * Process as many commands as possible and resolve thier promises
 	 * @returns {void}
 	 */
-	processDataBuffer() {
-		/** @type {Response} */
+	replyToCommands() {
+		/** @type {ResponseData | undefined} */
 		let response;
 
-		response = processCommand(this.dataBuffer);
-		while (response.data) {
+		while ((response = this.decoder.processCommand())) {
 			const nextCmd = this.commandQueue.shiftWaitingForReply();
 			if (!nextCmd) {
 				// Server does not send random data and since there is no command waiting, error occured somewhere
@@ -129,13 +147,7 @@ class liteDBClient extends EventEmitter {
 			}
 
 			// resolve the promise with the response data
-			nextCmd.resolve(response.data);
-
-			// remove the processed data from the buffer
-			this.dataBuffer = response.newDataBuffer;
-
-			// process the next command
-			response = processCommand(this.dataBuffer);
+			nextCmd.resolve(response);
 		}
 	}
 
@@ -148,38 +160,18 @@ class liteDBClient extends EventEmitter {
 
 	handleData(data) {
 		const waitingReplyLength = this.commandQueue.waitingForReply.length;
-
-		// if (waitingReplyLength < 1) {
-		// 	// Server does not send random data and since there is no command waiting, error occured somewhere
-		// 	throw new Error(
-		// 		"Received data from server with no command waiting"
-		// 	);
-		// }
-
-		this.dataBuffer = Buffer.concat([this.dataBuffer, data]);
-
-		// process the data buffer and resolve the promise for the command
-		this.processDataBuffer();
-	}
-
-	tick() {
-		// if the socket write buffer is full and waiting for a drain event, return, dont want to potentially overflow the in-memory buffer queue since the kernel buffer is full
-		if (this.liteDBSocket.writableNeedDrain) {
-			return;
+		if (waitingReplyLength < 1) {
+			// Server does not send random data and since there is no command waiting, error occured somewhere
+			throw new Error(
+				"Received data from server with no command waiting"
+			);
 		}
 
-		while (!this.liteDBSocket.writableNeedDrain) {
-			// get the next command to send
-			const nextCmd = this.commandQueue.getNextCommand();
+		// append the data to the decoder
+		this.decoder.addData(data);
 
-			// if there are no more commands to send, break out of the loop
-			if (!nextCmd) {
-				break;
-			}
-
-			// write the command to the server socket
-			this.liteDBSocket.writeCmd(nextCmd);
-		}
+		// attempt to reply to commands waiting for a response
+		this.replyToCommands();
 	}
 }
 
@@ -191,9 +183,25 @@ const client = await createClient()
 	})
 	.connect();
 
-let cmd = {
-	cmdStr: "keys",
-	cmdLen: 4,
+let cmdStr1 = "keys";
+
+let cmd1 = {
+	cmdStr: cmdStr1,
+	cmdLen: cmdStr1.length,
 };
 
-console.log(await client.sendCmd(cmd));
+let cmdStr2 = "get a";
+let cmd2 = {
+	cmdStr: cmdStr2,
+	cmdLen: cmdStr2.length,
+};
+
+let cmdStr3 = "keys a";
+let cmd3 = {
+	cmdStr: cmdStr3,
+	cmdLen: cmdStr3.length,
+};
+
+console.log(await client.sendCmd(cmd1));
+console.log(await client.sendCmd(cmd2));
+console.log(await client.sendCmd(cmd3));

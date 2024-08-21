@@ -11,7 +11,7 @@ import { Buffer } from "buffer";
 
 import { MAX_MESSAGE_SIZE } from "./protocol.js";
 
-export class liteDBSocket extends EventEmitter {
+export class LiteDBSocket extends EventEmitter {
 	/**
 	 * @param {ConnectOptions} [connectOptions]
 	 * @constructor

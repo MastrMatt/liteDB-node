@@ -7,11 +7,6 @@ export interface ConnectOptions {
 
 export interface ClientOptions {}
 
-export interface Response {
-	data?: ResponseData;
-	newDataBuffer: Buffer;
-}
-
 export interface ResponseData {
 	type: number;
 	length: number;
