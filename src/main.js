@@ -112,20 +112,17 @@ class liteDBClient extends EventEmitter {
 
 	/**
 	 * Process as many commands as possible from the data buffer and resolve thier promises
-	 * @param {Buffer} dataBuffer - The data buffer to process
 	 * @returns {void}
 	 */
-	processDataBuffer(dataBuffer) {
+	processDataBuffer() {
 		/** @type {Response} */
 		let response;
 
-		// process as many commands as possible from data buffer
-		while ((response = processCommand(dataBuffer))) {
+		response = processCommand(this.dataBuffer);
+		while (response.data) {
 			const nextCmd = this.commandQueue.shiftWaitingForReply();
 			if (!nextCmd) {
 				// Server does not send random data and since there is no command waiting, error occured somewhere
-				console.log("dataBuffer", dataBuffer);
-				console.log("")
 				throw new Error(
 					"Received data from server with no command waiting"
 				);
@@ -136,6 +133,9 @@ class liteDBClient extends EventEmitter {
 
 			// remove the processed data from the buffer
 			this.dataBuffer = response.newDataBuffer;
+
+			// process the next command
+			response = processCommand(this.dataBuffer);
 		}
 	}
 
@@ -149,17 +149,17 @@ class liteDBClient extends EventEmitter {
 	handleData(data) {
 		const waitingReplyLength = this.commandQueue.waitingForReply.length;
 
-		if (waitingReplyLength < 1) {
-			// Server does not send random data and since there is no command waiting, error occured somewhere
-			throw new Error(
-				"Received data from server with no command waiting"
-			);
-		}
+		// if (waitingReplyLength < 1) {
+		// 	// Server does not send random data and since there is no command waiting, error occured somewhere
+		// 	throw new Error(
+		// 		"Received data from server with no command waiting"
+		// 	);
+		// }
 
 		this.dataBuffer = Buffer.concat([this.dataBuffer, data]);
 
 		// process the data buffer and resolve the promise for the command
-		this.processDataBuffer(this.dataBuffer);
+		this.processDataBuffer();
 	}
 
 	tick() {
@@ -196,5 +196,4 @@ let cmd = {
 	cmdLen: 4,
 };
 
-client.sendCmd(cmd);
-// client.sendCmd(cmd);
+console.log(await client.sendCmd(cmd));
