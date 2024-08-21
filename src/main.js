@@ -5,6 +5,8 @@
 // 5) don't forgot to generate the .d.ts to support library users who use typescript
 // See how to store objects in the db, hashSet or a string as json.stringify?
 
+// ! Very important to record and handle errors properly, there is alot going on
+
 import {
 	MAX_MESSAGE_SIZE,
 	MAX_ARGS,
@@ -16,11 +18,14 @@ import {
 import { EventEmitter } from "events";
 import { CommandQueue } from "./commandQueue.js";
 import { liteDBSocket } from "./liteDBSocket.js";
+import { processCommand } from "./commands.js";
 
 /**
  * @typedef {import('./types.js').ClientOptions} ClientOptions
  * @typedef {import('./types.js').LiteDBCommand} LiteDBCommand
  * @typedef {import('./types.js').ConnectOptions} ConnectOptions
+ * @typedef {import('./types.js').ResponseData} ResponseData
+ * @typedef {import('./types.js').Response} Response
  */
 
 /**
@@ -40,16 +45,20 @@ class liteDBClient extends EventEmitter {
 	constructor(clientOptions) {
 		super();
 		this.liteDBSocket = new liteDBSocket();
-
-		// queue for handling commands
 		this.commandQueue = new CommandQueue();
+		this.dataBuffer = Buffer.alloc(0);
 	}
 
 	/**
-	 * @param {ConnectOptions} connectOptions
+	 * @param {ConnectOptions} [connectOptions]
 	 */
 	async connect(connectOptions) {
-		this.liteDBSocket.connect(connectOptions);
+		if (!connectOptions) {
+			connectOptions = {
+				host: DEFAULT_SERVERIP,
+				port: DEFAULT_SERVERPORT,
+			};
+		}
 
 		this.liteDBSocket
 			.on("connect", () => {
@@ -74,9 +83,10 @@ class liteDBClient extends EventEmitter {
 					this.emit("error", err);
 				}
 			});
-	}
 
-	handleData(data) {}
+		await this.liteDBSocket.connect(connectOptions);
+		return this;
+	}
 
 	/**
 	 * Sends a command to the server and return a promise that resolves when the command is fully processed and contains the server responsee
@@ -98,6 +108,58 @@ class liteDBClient extends EventEmitter {
 		this.tick();
 
 		return retPromise;
+	}
+
+	/**
+	 * Process as many commands as possible from the data buffer and resolve thier promises
+	 * @param {Buffer} dataBuffer - The data buffer to process
+	 * @returns {void}
+	 */
+	processDataBuffer(dataBuffer) {
+		/** @type {Response} */
+		let response;
+
+		// process as many commands as possible from data buffer
+		while ((response = processCommand(dataBuffer))) {
+			const nextCmd = this.commandQueue.shiftWaitingForReply();
+			if (!nextCmd) {
+				// Server does not send random data and since there is no command waiting, error occured somewhere
+				console.log("dataBuffer", dataBuffer);
+				console.log("")
+				throw new Error(
+					"Received data from server with no command waiting"
+				);
+			}
+
+			// resolve the promise with the response data
+			nextCmd.resolve(response.data);
+
+			// remove the processed data from the buffer
+			this.dataBuffer = response.newDataBuffer;
+		}
+	}
+
+	/**
+	 * Handles the data buffer received from the server
+	 *
+	 * @param {Buffer} data - The data buffer received from the server
+	 * @returns {void}
+	 */
+
+	handleData(data) {
+		const waitingReplyLength = this.commandQueue.waitingForReply.length;
+
+		if (waitingReplyLength < 1) {
+			// Server does not send random data and since there is no command waiting, error occured somewhere
+			throw new Error(
+				"Received data from server with no command waiting"
+			);
+		}
+
+		this.dataBuffer = Buffer.concat([this.dataBuffer, data]);
+
+		// process the data buffer and resolve the promise for the command
+		this.processDataBuffer(this.dataBuffer);
 	}
 
 	tick() {
@@ -124,9 +186,15 @@ class liteDBClient extends EventEmitter {
 // test the client
 const client = await createClient()
 	.on("error", (err) => {
-		console.error("Connection error occured");
+		// print the error
+		console.error(err);
 	})
 	.connect();
 
-client.sendCmd(4, "PING");
-client.sendCmd(6, "PINGER");
+let cmd = {
+	cmdStr: "keys",
+	cmdLen: 4,
+};
+
+client.sendCmd(cmd);
+// client.sendCmd(cmd);

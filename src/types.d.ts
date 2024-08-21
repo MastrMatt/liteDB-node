@@ -7,9 +7,15 @@ export interface ConnectOptions {
 
 export interface ClientOptions {}
 
-export interface RecvData {
+export interface Response {
+	data?: ResponseData;
+	newDataBuffer: Buffer;
+}
+
+export interface ResponseData {
 	type: number;
-	value?: number | string | any[];
+	length: number;
+	data?: number | string | any[];
 }
 
 export interface LiteDBCommand {

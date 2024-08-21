@@ -13,6 +13,8 @@ import { CMDQUEUEMAXSIZE } from "./protocol.js";
  * @typedef {import('./types.d.ts').CommandWaitingToBeSent} CommandWaitingToBeSent
  * @typedef {import('./types.d.ts').CommandWaitingForReply} CommandWaitingForReply
  * @typedef {import('./types.d.ts').LiteDBCommand} LiteDBCommand
+ * @typedef {import('./types.d.ts').ResponseData} ResponseData
+ * @typedef {import('./types.d.ts').Response} Response
  */
 
 export class CommandQueue {
@@ -28,12 +30,15 @@ export class CommandQueue {
 
 		/** @type {Yallist<CommandWaitingForReply>} */
 		this.waitingForReply = new Yallist();
+
+		// buffer to store incoming data
+		this.dataBuffer = Buffer.alloc(0);
 	}
 
 	/**
 	 * Add a command to the queue to be sent to the server
 	 * @param {LiteDBCommand} cmd - The command object to add to the queue
-	 * @returns Promise<any> - The promise that will be resolved when the command if fully processed, it contains the server response
+	 * @returns Promise<> - The promise that will be resolved when the command if fully processed, it contains the server response
 	 */
 	addCommand(cmd) {
 		if (
@@ -72,23 +77,10 @@ export class CommandQueue {
 	}
 
 	/**
-	 * Handles the data buffer received from the server
-	 *
-	 * @param {Buffer} data - The data buffer received from the server
-	 * @returns {void}
+	 * Remove the first command from the waiting for reply queue
+	 * @returns {CommandWaitingForReply | undefined} The first command in the waiting for reply queue
 	 */
-
-	handleData(data) {
-		// see if the data is enough to resolve the first command
-		const firstCmd = this.waitingForReply.shift();
-
-		if (!firstCmd) {
-			// Server does not send random data, error somewhere
-			throw new Error(
-				"Received data from server with no command waiting"
-			);
-		}
-
-		// ! Parse response based on the command and see if sufficient data has been received
+	shiftWaitingForReply() {
+		return this.waitingForReply.shift();
 	}
 }
