@@ -1,16 +1,10 @@
 // types.d.ts
 
+export interface ClientOptions {}
+
 export interface ConnectOptions {
 	host: string;
 	port: number;
-}
-
-export interface ClientOptions {}
-
-export interface ResponseData {
-	type: number;
-	length: number;
-	data?: number | string | any[];
 }
 
 export interface LiteDBCommand {
@@ -25,4 +19,10 @@ export interface CommandWaitingForReply {
 
 export interface CommandWaitingToBeSent extends CommandWaitingForReply {
 	cmd: LiteDBCommand;
+}
+
+export interface ResponseData {
+	type: number;
+	length: number;
+	data?: number | string | any[];
 }

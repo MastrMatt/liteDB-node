@@ -35,9 +35,9 @@ export class CommandQueue {
 	}
 
 	/**
-	 * Add a command to the queue to be sent to the server
+	 * Add a command to the waiting to be sent queue
 	 * @param {LiteDBCommand} cmd - The command object to add to the queue
-	 * @returns Promise<> - The promise that will be resolved when the command if fully processed, it contains the server response
+	 * @returns Promise<> - The promise that will be resolved when the command is fully processed, the promise will contain decoded server response
 	 */
 	addCommand(cmd) {
 		if (
@@ -58,7 +58,8 @@ export class CommandQueue {
 	}
 
 	/**
-	 * Send the next command in the queue to the server
+	 * Removes the first command from the waiting to be sent queue
+	 *
 	 * @returns {LiteDBCommand | undefined} - The next command to be sent
 	 */
 
