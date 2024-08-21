@@ -1,6 +1,6 @@
 // command queue for hadling commands
 
-// 1) Queue for commands to be sent to the server, should contain cmdstring and optional arguments
+// 1) Queue for commands to be sent to the server, should be an object containing cmdstring and optional arguments
 // 2) Queue for command waiting for a response from the server, these should have the resolve and reject functions attached to them
 // 3) A mechanism to send the commands to the server and add to the waiting queue
 // 4) A mechanism to handle the response from the server and resolve the promise
@@ -10,8 +10,9 @@ import { Yallist } from "yallist";
 import { CMDQUEUEMAXSIZE } from "./protocol.js";
 
 /**
- * @typedef {import('./types.d.ts').ClientOptions} CommandWaitingForReply
- * @typedef {import('./types.d.ts').RecvData} CommandWaitingToBeSent
+ * @typedef {import('./types.d.ts').CommandWaitingToBeSent} CommandWaitingToBeSent
+ * @typedef {import('./types.d.ts').CommandWaitingForReply} CommandWaitingForReply
+ * @typedef {import('./types.d.ts').LiteDBCommand} LiteDBCommand
  */
 
 export class CommandQueue {
@@ -21,13 +22,17 @@ export class CommandQueue {
 	 */
 	constructor(maxLength) {
 		this.maxLength = maxLength || CMDQUEUEMAXSIZE;
+
+		/** @type {Yallist<CommandWaitingToBeSent>} */
 		this.waitingToBeSent = new Yallist();
+
+		/** @type {Yallist<CommandWaitingForReply>} */
 		this.waitingForReply = new Yallist();
 	}
 
 	/**
 	 * Add a command to the queue to be sent to the server
-	 * @param {string} cmd - The command string to send to the server
+	 * @param {LiteDBCommand} cmd - The command object to add to the queue
 	 * @returns Promise
 	 */
 	addCommandToQueue(cmd) {
@@ -39,9 +44,30 @@ export class CommandQueue {
 		}
 
 		return new Promise((resolve, reject) => {
-			// ! Read rest of the nodejs commands queue
-
-            
+			// add to the command to the end of the queue
+			this.waitingToBeSent.push({
+				cmd,
+				resolve,
+				reject,
+			});
 		});
+	}
+
+	/**
+	 * Send the next command in the queue to the server
+	 * @returns {LiteDBCommand | undefined} - The next command to be sent
+	 */
+
+	getNextCommand() {
+		const nextCmd = this.waitingToBeSent.shift();
+		if (!nextCmd) return;
+
+		// add the command to the waiting for reply queue
+		this.waitingForReply.push({
+			resolve: nextCmd.resolve,
+			reject: nextCmd.reject,
+		});
+
+		return nextCmd.cmd;
 	}
 }

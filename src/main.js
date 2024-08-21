@@ -5,10 +5,6 @@
 // 5) don't forgot to generate the .d.ts to support library users who use typescript
 // See how to store objects in the db, hashSet or a string as json.stringify?
 
-import { EventEmitter } from "events";
-import { Buffer } from "buffer";
-import { Socket } from "net";
-
 import {
 	MAX_MESSAGE_SIZE,
 	MAX_ARGS,
@@ -17,9 +13,12 @@ import {
 	SER_VALUES,
 } from "./protocol.js";
 
+import { CommandQueue } from "./commandQueue.js";
+import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
+
 /**
- * @typedef {import('./types.d.ts').ClientOptions} ClientOptions
- * @typedef {import('./types.d.ts').RecvData} RecvData
+ * @typedef {import('./types.js').ClientOptions} ClientOptions
+ * @typedef {import('./types.js').LiteDBCommand} LiteDBCommand
  */
 
 /**
@@ -42,8 +41,12 @@ class liteDBClient extends EventEmitter {
 		this.port = options?.port || DEFAULT_SERVERPORT;
 		this.socket = new Socket();
 
-		// pipeline queue
-		this.commandQueue = [];
+		// queue for handling commands
+		this.commandQueue = new CommandQueue();
+	}
+
+	isConnected() {
+		return this.socket.connected;
 	}
 
 	async connect() {
@@ -61,6 +64,11 @@ class liteDBClient extends EventEmitter {
 				// emit an error and also reject the promise, so the caller can handle the error either way they want
 				this.emit("error", err);
 				reject(err);
+			});
+
+			// when the write buffer is drained, keep processing the commands
+			this.socket.on("drain", () => {
+				this.tick();
 			});
 		});
 	}
@@ -82,13 +90,14 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Sends a command to the server
-	 * @param {number} cmdLength
-	 * @param {string} cmdString
+	 * Writes a command to the server socket
+	 *
+	 * @param {LiteDBCommand} cmd
+	 *
 	 */
-	sendCmd(cmdLength, cmdString) {
+	writeCmd(cmd) {
 		// check if the command length exceeds the maximum allowed
-		if (cmdLength > MAX_MESSAGE_SIZE) {
+		if (cmd.cmdLen > MAX_MESSAGE_SIZE) {
 			this.emit(
 				"error",
 				new Error(
@@ -99,16 +108,46 @@ class liteDBClient extends EventEmitter {
 
 		// create a buffer to hold the length of the command
 		const cmdLengthBuffer = Buffer.alloc(4);
-		cmdLengthBuffer.writeInt32LE(cmdLength);
+		cmdLengthBuffer.writeInt32LE(cmd.cmdLen);
 
 		// create a buffer to hold the command string
-		const cmdBuffer = this.createBuffer(cmdLength, cmdString);
+		const cmdStrBuffer = this.createBuffer(cmd.cmdLen, cmd.cmdStr);
 
 		// concat
-		const cmd = Buffer.concat([cmdLengthBuffer, cmdBuffer], 4 + cmdLength);
+		const cmdBuffer = Buffer.concat(
+			[cmdLengthBuffer, cmdStrBuffer],
+			4 + cmd.cmdLen
+		);
 
 		// send the command to the server
-		this.socket.write(cmd);
+		this.socket.write(cmdBuffer);
+	}
+
+	/**
+	 * Sends a command to the server
+	 * @param {LiteDBCommand} cmd
+	 * @returns {Promise<>}
+	 */
+	sendCmd(cmd) {}
+
+	tick() {
+		// if the socket write buffer is full and waiting for a drain event, return, dont wwant ot potentially overflow the inmemory buffer queue since the kernel buffer is full
+		if (this.socket.writableNeedDrain) {
+			return;
+		}
+
+		while (!this.socket.writableNeedDrain) {
+			// get the next command to send
+			const nextCmd = this.commandQueue.getNextCommand();
+
+			// if there are no more commands to send, break out of the loop
+			if (!nextCmd) {
+				break;
+			}
+
+			// write the command to the server socket
+			this.writeCmd(nextCmd);
+		}
 	}
 }
 
