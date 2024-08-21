@@ -13,130 +13,100 @@ import {
 	SER_VALUES,
 } from "./protocol.js";
 
+import { EventEmitter } from "events";
 import { CommandQueue } from "./commandQueue.js";
-import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
+import { liteDBSocket } from "./liteDBSocket.js";
 
 /**
  * @typedef {import('./types.js').ClientOptions} ClientOptions
  * @typedef {import('./types.js').LiteDBCommand} LiteDBCommand
+ * @typedef {import('./types.js').ConnectOptions} ConnectOptions
  */
 
 /**
  * Creates a new instance of the liteDB client
- * @param {ClientOptions} [options] - The options to use when creating the client
+ * @param {ClientOptions} [clientOptions] - The options to use when creating the client
  * @returns {liteDBClient}
  */
-function createClient(options) {
-	return new liteDBClient(options);
+function createClient(clientOptions) {
+	return new liteDBClient(clientOptions);
 }
 
 class liteDBClient extends EventEmitter {
 	/**
-	 * @param {ClientOptions} [options]
+	 * @param {ClientOptions} [clientOptions]
 	 * @constructor
 	 */
-	constructor(options) {
+	constructor(clientOptions) {
 		super();
-		this.host = options?.host || DEFAULT_SERVERIP;
-		this.port = options?.port || DEFAULT_SERVERPORT;
-		this.socket = new Socket();
+		this.liteDBSocket = new liteDBSocket();
 
 		// queue for handling commands
 		this.commandQueue = new CommandQueue();
 	}
 
-	isConnected() {
-		return this.socket.connected;
-	}
+	/**
+	 * @param {ConnectOptions} connectOptions
+	 */
+	async connect(connectOptions) {
+		this.liteDBSocket.connect(connectOptions);
 
-	async connect() {
-		return new Promise((resolve, reject) => {
-			this.socket.connect(this.port, this.host, () => {
+		this.liteDBSocket
+			.on("connect", () => {
 				this.emit("connect");
-				console.log("Connected to the server");
-
-				// resolve and return instance of the client
-				resolve(this);
-			});
-
-			// propagate the socket error as a liteDB client error
-			this.socket.on("error", (err) => {
-				// emit an error and also reject the promise, so the caller can handle the error either way they want
+			})
+			.on("close", () => {
+				this.emit("close");
+			})
+			.on("end", () => {
+				this.emit("end");
+			})
+			.on("error", (err) => {
 				this.emit("error", err);
-				reject(err);
-			});
-
-			// when the write buffer is drained, keep processing the commands
-			this.socket.on("drain", () => {
+			})
+			.on("drain", () => {
 				this.tick();
+			})
+			.on("data", (data) => {
+				try {
+					this.handleData(data);
+				} catch (err) {
+					this.emit("error", err);
+				}
 			});
-		});
 	}
 
-	/**
-	 * Creates a new Buffer from the provided data, ensuring it does not exceed the specified maximum size.
-	 *
-	 * @param {number} maxSize
-	 * @param {string} data
-	 *
-	 * @returns {Buffer} A Buffer containing the data
-	 */
-	createBuffer(maxSize, data) {
-		if (Buffer.byteLength(data, "utf-8") > maxSize) {
-			// throw an error if the data exceeds the maximum size
-			this.emit("error", new Error("Data exceeds maximum size"));
-		}
-		return Buffer.from(data);
-	}
+	handleData(data) {}
 
 	/**
-	 * Writes a command to the server socket
-	 *
+	 * Sends a command to the server and return a promise that resolves when the command is fully processed and contains the server responsee
 	 * @param {LiteDBCommand} cmd
-	 *
+	 * @returns Promise<any> - The promise that will be resolved when the command if fully processed, it contains the server response
 	 */
-	writeCmd(cmd) {
-		// check if the command length exceeds the maximum allowed
-		if (cmd.cmdLen > MAX_MESSAGE_SIZE) {
-			this.emit(
-				"error",
-				new Error(
-					"Command length exceeds maximum string message size for server"
-				)
+	sendCmd(cmd) {
+		if (!this.liteDBSocket.isReady) {
+			// non recoverable error, throw an error
+			throw new Error(
+				"Trying to send cmd to server when client not ready"
 			);
 		}
 
-		// create a buffer to hold the length of the command
-		const cmdLengthBuffer = Buffer.alloc(4);
-		cmdLengthBuffer.writeInt32LE(cmd.cmdLen);
+		// add the command to the queue
+		const retPromise = this.commandQueue.addCommand(cmd);
 
-		// create a buffer to hold the command string
-		const cmdStrBuffer = this.createBuffer(cmd.cmdLen, cmd.cmdStr);
+		// tick the command queue, to attempt to immediately send the command
+		this.tick();
 
-		// concat
-		const cmdBuffer = Buffer.concat(
-			[cmdLengthBuffer, cmdStrBuffer],
-			4 + cmd.cmdLen
-		);
-
-		// send the command to the server
-		this.socket.write(cmdBuffer);
+		return retPromise;
 	}
 
-	/**
-	 * Sends a command to the server
-	 * @param {LiteDBCommand} cmd
-	 * @returns {Promise<>}
-	 */
-	sendCmd(cmd) {}
-
 	tick() {
-		// if the socket write buffer is full and waiting for a drain event, return, dont wwant ot potentially overflow the inmemory buffer queue since the kernel buffer is full
-		if (this.socket.writableNeedDrain) {
+		// if the socket write buffer is full and waiting for a drain event, return, dont want to potentially overflow the in-memory buffer queue since the kernel buffer is full
+		if (this.liteDBSocket.writableNeedDrain) {
 			return;
 		}
 
-		while (!this.socket.writableNeedDrain) {
+		while (!this.liteDBSocket.writableNeedDrain) {
 			// get the next command to send
 			const nextCmd = this.commandQueue.getNextCommand();
 
@@ -146,7 +116,7 @@ class liteDBClient extends EventEmitter {
 			}
 
 			// write the command to the server socket
-			this.writeCmd(nextCmd);
+			this.liteDBSocket.writeCmd(nextCmd);
 		}
 	}
 }

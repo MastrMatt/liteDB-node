@@ -33,9 +33,9 @@ export class CommandQueue {
 	/**
 	 * Add a command to the queue to be sent to the server
 	 * @param {LiteDBCommand} cmd - The command object to add to the queue
-	 * @returns Promise
+	 * @returns Promise<any> - The promise that will be resolved when the command if fully processed, it contains the server response
 	 */
-	addCommandToQueue(cmd) {
+	addCommand(cmd) {
 		if (
 			this.waitingToBeSent.length + this.waitingForReply.length >=
 			this.maxLength
@@ -69,5 +69,26 @@ export class CommandQueue {
 		});
 
 		return nextCmd.cmd;
+	}
+
+	/**
+	 * Handles the data buffer received from the server
+	 *
+	 * @param {Buffer} data - The data buffer received from the server
+	 * @returns {void}
+	 */
+
+	handleData(data) {
+		// see if the data is enough to resolve the first command
+		const firstCmd = this.waitingForReply.shift();
+
+		if (!firstCmd) {
+			// Server does not send random data, error somewhere
+			throw new Error(
+				"Received data from server with no command waiting"
+			);
+		}
+
+		// ! Parse response based on the command and see if sufficient data has been received
 	}
 }

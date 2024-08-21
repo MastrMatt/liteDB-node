@@ -5,9 +5,7 @@ export interface ConnectOptions {
 	port: number;
 }
 
-export interface ClientOptions {
-	socketOptions: ConnectOptions;
-}
+export interface ClientOptions {}
 
 export interface RecvData {
 	type: number;
