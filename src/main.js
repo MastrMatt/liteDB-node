@@ -459,6 +459,7 @@ class liteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
+ // Use Promise.all here , not taking advantage of async
 		for (const [field, value] of Object.entries(values)) {
 			await this.hSet(key, field, value, commandOptions);
 		}
