@@ -96,8 +96,12 @@ class liteDBClient extends EventEmitter {
 	 *
 	 */
 
-	disconnect() {
+	async disconnect() {
 		// wait for the command queue to fully flush
+		await this.commandQueue.waitToBeFullyFlushed();
+
+		// close the socket
+		this.liteDBSocket.disconnect();
 	}
 
 	/**
@@ -108,7 +112,7 @@ class liteDBClient extends EventEmitter {
 	 */
 	tick() {
 		// if the socket write buffer is full and waiting for a drain event, return, dont want to potentially overflow the in-memory buffer queue since the kernel buffer is full
-		if (this.liteDBSocket.writableNeedDrain) {
+		if (this.liteDBSocket.writableNeedDrain || !this.liteDBSocket.isReady) {
 			return;
 		}
 
@@ -472,10 +476,12 @@ class liteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
- // Use Promise.all here , not taking advantage of async
-		for (const [field, value] of Object.entries(values)) {
-			await this.hSet(key, field, value, commandOptions);
-		}
+		// Don't sequentially await, await all promises at once to take advantage of parallelism, especially useful for IO bound tasks like network requests
+		await Promise.all(
+			Object.entries(values).map(([field, value]) => {
+				return this.hSet(key, field, value, commandOptions);
+			})
+		);
 	}
 
 	/**
@@ -1032,3 +1038,9 @@ await client.zAdd("zset", 1, "one");
 await client.zAdd("zset", 2, "two");
 console.log(await client.zQuery("zset", 1, "one", 0, 100));
 console.log(await client.hGetAll("test"));
+await client.disconnect();
+await client.connect();
+
+// All set commands overwrite the previous value if it exists on default except for send
+
+// disconnect waits for the command queue to fully flush before closing the socket, when disconnect is sucessful a close event is emitted

@@ -123,4 +123,18 @@ export class LiteDBSocket extends EventEmitter {
 		// send the command to the server
 		this.socket.write(cmdBuffer);
 	}
+
+	/**
+	 * Disconnect from the server
+	 */
+	disconnect() {
+		if (!this.isReady) {
+			throw new Error(
+				"Want to disconnected but not connected to the server"
+			);
+		}
+
+		this.isReady = false;
+		this.socket.destroy();
+	}
 }

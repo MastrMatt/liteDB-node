@@ -77,6 +77,20 @@ export class CommandQueue {
 	}
 
 	/**
+	 * 	Waits until both the waiting to be sent and waiting for reply queues are empty
+	 *
+	 */
+	async waitToBeFullyFlushed() {
+		// wait for all the queues to be empty
+		while (
+			this.waitingToBeSent.length > 0 ||
+			this.waitingForReply.length > 0
+		) {}
+
+		return;
+	}
+
+	/**
 	 * Remove the first command from the waiting for reply queue
 	 * @returns {CommandWaitingForReply | undefined} The first command in the waiting for reply queue
 	 */
