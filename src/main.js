@@ -7,13 +7,18 @@
 
 // ! Very important to record and handle errors properly, there is alot going on, do some more tommorow
 
-import { DEFAULT_SERVERPORT, DEFAULT_SERVERIP, MAX_ARGS } from "./protocol.js";
+import {
+	DEFAULT_SERVERPORT,
+	DEFAULT_SERVERIP,
+	MAX_ARGS,
+	SER_VALUES,
+} from "./protocol.js";
 
 import { EventEmitter } from "events";
 import { CommandQueue } from "./commandQueue.js";
 import { LiteDBSocket } from "./liteDBSocket.js";
 import { LiteDBDecoder } from "./decoder.js";
-import { concatCommandOptions } from "./commands.js";
+import { concatCommandOptions, arrayToObject } from "./utils.js";
 
 /**
  * @typedef {import('./types.js').ClientOptions} ClientOptions
@@ -175,17 +180,77 @@ class liteDBClient extends EventEmitter {
 		this.replyToCommands();
 	}
 
-	// time to inject all commands here now
+	/**
+	 *
+	 * @param {ResponseData} responseData
+	 */
+	parseResponseData(responseData) {
+		if (responseData.type === SER_VALUES.SER_NIL) {
+			return;
+		} else if (responseData.type === SER_VALUES.SER_ERR) {
+			// parse the response data
+			const errorString = responseData?.data?.toString();
+			throw new Error(errorString);
+		} else if (responseData.type == SER_VALUES.SER_STR) {
+			return responseData.data;
+		} else if (responseData.type == SER_VALUES.SER_INT) {
+			const intString = responseData?.data?.toString();
+			if (!intString) {
+				throw new Error("Invalid int string");
+			}
+			return parseInt(intString);
+		} else if (responseData.type == SER_VALUES.SER_FLOAT) {
+			const floatString = responseData?.data?.toString();
+			if (!floatString) {
+				throw new Error("Invalid float string");
+			}
+			return parseFloat(floatString);
+		} else if (responseData.type == SER_VALUES.SER_ARR) {
+			if (!responseData.data || !Array.isArray(responseData.data)) {
+				throw new Error("Invalid array data");
+			}
+
+			let elements = [];
+			for (let i = 0; i < responseData.data.length; i++) {
+				// Assuming responseData.data is now known to be an array
+				const data = responseData.data[i];
+
+				if (data.type === SER_VALUES.SER_STR) {
+					elements.push(data.data);
+				} else if (data.type === SER_VALUES.SER_INT) {
+					// convert the data to an integer
+					const intString = data.data?.toString();
+					if (!intString) {
+						throw new Error("Invalid int string");
+					}
+					elements.push(parseInt(intString));
+				} else if (data.type === SER_VALUES.SER_FLOAT) {
+					// convert the data to a float
+					const floatString = data.data?.toString();
+					if (!floatString) {
+						throw new Error("Invalid float string");
+					}
+					elements.push(parseFloat(floatString));
+				}
+			}
+
+			return elements;
+		}
+	}
 
 	/**
-	 * Constructs a LiteDB 'delete' command.
+	 * Executes a LiteDB 'delete' command.
 	 *
 	 * @param {string} key - The key of the item to delete.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async del(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -199,17 +264,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'keys' command.
+	 * Executes a LiteDB 'keys' command.
 	 *
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async keys(commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+
 		if (0 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -223,17 +298,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'flushall' command.
+	 * Executes a LiteDB 'flushall' command.
 	 *
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async flushall(commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+
 		if (0 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -247,16 +332,26 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 *	Executes a LiteDB 'get' command.
 	 *
 	 * @param {string} key
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The command object
 	 */
 	async get(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -270,19 +365,28 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'set' command.
+	 * Executes a LiteDB 'set' command.
 	 *
 	 * @param {string} key - The key of the item to set.
 	 * @param {*} value - The value to set for the given key.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async set(key, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -296,19 +400,29 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 *	Executes a LiteDB 'hset' command.
 	 *
 	 * @param {string} key
 	 * @param {string} field
 	 * @param {string} value
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async hSet(key, field, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -322,18 +436,47 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
 	 *
 	 * @param {string} key
+	 * @param {Object} values
+	 * @param {Object} [commandOptions]
+	 */
+	async hSetObject(key, values, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		for (const [field, value] of Object.entries(values)) {
+			await this.hSet(key, field, value, commandOptions);
+		}
+	}
+
+	/**
+	 * Executes a LiteDB 'hget' command.
+	 *
+	 * @param {string} key
 	 * @param {string} field
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async hGet(key, field, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -347,17 +490,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 * Executes a LiteDB 'hdel' command.
 	 *
 	 * @param {string} key
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async hDel(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -371,17 +524,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 * Executes a LiteDB 'hgetall' command.
 	 *
 	 * @param {string} key
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async hGetAll(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -395,18 +558,35 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			const reponseArray = this.parseResponseData(responseData);
+			if (!Array.isArray(reponseArray)) {
+				throw new Error(
+					"Invalid response data, should be getting an array for hGetAll"
+				);
+			}
+
+			return arrayToObject(reponseArray);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 *	Executes a LiteDB 'lpush' command.
 	 *
 	 * @param {string} key
 	 * @param {string} value
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async lPush(key, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -420,18 +600,28 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 *	Executes a LiteDB 'rpush' command.
 	 *
 	 * @param {string} key
 	 * @param {string} value
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async rPush(key, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -445,17 +635,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 *	Executes a LiteDB 'lpop' command.
 	 *
 	 * @param {string} key
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async lPop(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -469,17 +669,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
+	 *	Executes a LiteDB 'rpop' command.
 	 *
 	 * @param {string} key
-	 * @param {Object} commandOptions
+	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async rPop(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -493,17 +703,27 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'llen' command.
+	 * Executes a LiteDB 'llen' command.
+	 *
 	 * @param {string} key - The key of the list to get the length of.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async lLen(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -517,19 +737,29 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'lrange' command.
+	 * Executes a LiteDB 'lrange' command.
+	 *
 	 * @param {string} key - The key of the list to get the range of.
 	 * @param {number} start - The start index of the range.
 	 * @param {number} stop - The stop index of the range.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async lRange(key, start, stop, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -543,19 +773,29 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'ltrim' command.
+	 * Executes a LiteDB 'ltrim' command.
+	 *
 	 * @param {string} key - The key of the list to get the index of.
 	 * @param {number} start - The start index of the list.
 	 * @param {number} stop - The stop index of the list.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async lTrim(key, start, stop, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -569,19 +809,29 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'lset' command.
+	 * Executes a LiteDB 'lset' command.
+	 *
 	 * @param {string} key - The key of the list to set the index of.
 	 * @param {number} index - The index of the list to set.
 	 * @param {string} value - The value to set the index to.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async lSet(key, index, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -595,19 +845,29 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'zadd' command.
+	 * Executes a LiteDB 'zadd' command.
+	 *
 	 * @param {string} key - The key of the sorted set to add the value to.
 	 * @param {number} score - The score of the value to add to the sorted set.
 	 * @param {string} name - The name of the value to add to the sorted set.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async zAdd(key, score, name, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -621,18 +881,28 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'zrem' command.
+	 * Executes a LiteDB 'zrem' command.
+	 *
 	 * @param {string} key - The key of the sorted set to remove the value from.
 	 * @param {string} name - The name of the value to remove from the sorted set.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async zRem(key, name, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -646,18 +916,28 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'zscore' command.
+	 * Executes a LiteDB 'zscore' command.
+	 *
 	 * @param {string} key - The key of the sorted set to get the score of the value from.
 	 * @param {string} name - The name of the value to get the score of from the sorted set.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
 	async zScore(key, name, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -671,20 +951,30 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 
 	/**
-	 * Constructs a LiteDB 'zQuery' command.
+	 * Executes a LiteDB 'zQuery' command.
+	 *
 	 * @param {string} key - The key of the sorted set to query.
 	 * @param {number} score - The score to query the sorted set with.
 	 * @param {string} name - The name of the value to query the sorted set with.
 	 * @param {number} offset - The offset to query the sorted set with.
 	 * @param {number} limit - The limit to query the sorted set with.
-	 * @param {Object} commandOptions - Additional options for the command.
+	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
 	 */
 	async zQuery(key, score, name, offset, limit, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
 		if (5 + Object.keys(commandOptions).length > MAX_ARGS) {
 			throw new Error("Too many arguments");
 		}
@@ -698,7 +988,20 @@ class liteDBClient extends EventEmitter {
 			cmdLen: cmdStr.length,
 		};
 
-		return this.sendCmd(command);
+		const responseData = await this.sendCmd(command);
+
+		try {
+			const responseArray = this.parseResponseData(responseData);
+			if (!Array.isArray(responseArray)) {
+				throw new Error(
+					"Invalid response data, should be getting an array for zQuery"
+				);
+			}
+
+			return arrayToObject(responseArray);
+		} catch (err) {
+			this.emit("error", err);
+		}
 	}
 }
 
@@ -710,25 +1013,8 @@ const client = await createClient()
 	})
 	.connect();
 
-let cmdStr1 = "keys";
-
-let cmd1 = {
-	cmdStr: cmdStr1,
-	cmdLen: cmdStr1.length,
-};
-
-let cmdStr2 = "get a";
-let cmd2 = {
-	cmdStr: cmdStr2,
-	cmdLen: cmdStr2.length,
-};
-
-let cmdStr3 = "ping";
-let cmd3 = {
-	cmdStr: cmdStr3,
-	cmdLen: cmdStr3.length,
-};
-
-console.log(await client.sendCmd(cmd1));
-console.log(await client.sendCmd(cmd2));
-console.log(await client.sendCmd(cmd3));
+await client.hSetObject("test", { a: 1, b: 2, c: 3 });
+await client.zAdd("zset", 1, "one");
+await client.zAdd("zset", 2, "two");
+console.log(await client.zQuery("zset", 1, "one", 0, 100));
+console.log(await client.hGetAll("test"));
