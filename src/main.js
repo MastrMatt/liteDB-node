@@ -5,7 +5,11 @@
 // 5) don't forgot to generate the .d.ts to support library users who use typescript
 // See how to store objects in the db, hashSet or a string as json.stringify?
 
-// ! Very important to record and handle errors properly, there is alot going on, do some more tommorow
+// ! Work on testing and documentation, may need to refactor some code to make it more testable if time permits
+
+// !Implement a way to close the client, make sure to flush the command queue and close the socket
+
+// ! Might move the decoder to the commandQueue, since the commandQueue is the one that is responsible for processing the commands
 
 import {
 	DEFAULT_SERVERPORT,
@@ -85,6 +89,15 @@ class liteDBClient extends EventEmitter {
 
 		await this.liteDBSocket.connect(connectOptions);
 		return this;
+	}
+
+	/**
+	 * Disconnects the client from the server, fully flushing the command queue and closing the socket
+	 *
+	 */
+
+	disconnect() {
+		// wait for the command queue to fully flush
 	}
 
 	/**
@@ -186,7 +199,7 @@ class liteDBClient extends EventEmitter {
 	 */
 	parseResponseData(responseData) {
 		if (responseData.type === SER_VALUES.SER_NIL) {
-			return;
+			return null;
 		} else if (responseData.type === SER_VALUES.SER_ERR) {
 			// parse the response data
 			const errorString = responseData?.data?.toString();
