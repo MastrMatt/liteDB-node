@@ -1,4 +1,4 @@
-// command queue for hadling commands
+// command queue for handling commands
 
 // 1) Queue for commands to be sent to the server, should be an object containing cmdstring and optional arguments
 // 2) Queue for command waiting for a response from the server, these should have the resolve and reject functions attached to them

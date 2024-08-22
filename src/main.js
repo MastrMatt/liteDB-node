@@ -7,12 +7,13 @@
 
 // ! Very important to record and handle errors properly, there is alot going on, do some more tommorow
 
-import { DEFAULT_SERVERPORT, DEFAULT_SERVERIP } from "./protocol.js";
+import { DEFAULT_SERVERPORT, DEFAULT_SERVERIP, MAX_ARGS } from "./protocol.js";
 
 import { EventEmitter } from "events";
 import { CommandQueue } from "./commandQueue.js";
 import { LiteDBSocket } from "./liteDBSocket.js";
 import { LiteDBDecoder } from "./decoder.js";
+import { concatCommandOptions } from "./commands.js";
 
 /**
  * @typedef {import('./types.js').ClientOptions} ClientOptions
@@ -173,6 +174,532 @@ class liteDBClient extends EventEmitter {
 		// attempt to reply to commands waiting for a response
 		this.replyToCommands();
 	}
+
+	// time to inject all commands here now
+
+	/**
+	 * Constructs a LiteDB 'delete' command.
+	 *
+	 * @param {string} key - The key of the item to delete.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async del(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `del ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'keys' command.
+	 *
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async keys(commandOptions) {
+		if (0 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = "keys";
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'flushall' command.
+	 *
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async flushall(commandOptions) {
+		if (0 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = "flushall";
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The command object
+	 */
+	async get(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `get ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'set' command.
+	 *
+	 * @param {string} key - The key of the item to set.
+	 * @param {*} value - The value to set for the given key.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async set(key, value, commandOptions) {
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `set ${key} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {string} field
+	 * @param {string} value
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async hSet(key, field, value, commandOptions) {
+		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `hset ${key} ${field} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {string} field
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async hGet(key, field, commandOptions) {
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `hget ${key} ${field}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async hDel(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `hdel ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async hGetAll(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `hgetall ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {string} value
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lPush(key, value, commandOptions) {
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `lpush ${key} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {string} value
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async rPush(key, value, commandOptions) {
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `rpush ${key} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lPop(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `lpop ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 *
+	 * @param {string} key
+	 * @param {Object} commandOptions
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async rPop(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `rpop ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'llen' command.
+	 * @param {string} key - The key of the list to get the length of.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lLen(key, commandOptions) {
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `llen ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'lrange' command.
+	 * @param {string} key - The key of the list to get the range of.
+	 * @param {number} start - The start index of the range.
+	 * @param {number} stop - The stop index of the range.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lRange(key, start, stop, commandOptions) {
+		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `lrange ${key} ${start} ${stop}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'ltrim' command.
+	 * @param {string} key - The key of the list to get the index of.
+	 * @param {number} start - The start index of the list.
+	 * @param {number} stop - The stop index of the list.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lTrim(key, start, stop, commandOptions) {
+		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `ltrim ${key} ${start} ${stop}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'lset' command.
+	 * @param {string} key - The key of the list to set the index of.
+	 * @param {number} index - The index of the list to set.
+	 * @param {string} value - The value to set the index to.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lSet(key, index, value, commandOptions) {
+		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `lset ${key} ${index} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'zadd' command.
+	 * @param {string} key - The key of the sorted set to add the value to.
+	 * @param {number} score - The score of the value to add to the sorted set.
+	 * @param {string} name - The name of the value to add to the sorted set.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async zAdd(key, score, name, commandOptions) {
+		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `zadd ${key} ${score} ${name}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'zrem' command.
+	 * @param {string} key - The key of the sorted set to remove the value from.
+	 * @param {string} name - The name of the value to remove from the sorted set.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async zRem(key, name, commandOptions) {
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `zrem ${key} ${name}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'zscore' command.
+	 * @param {string} key - The key of the sorted set to get the score of the value from.
+	 * @param {string} name - The name of the value to get the score of from the sorted set.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async zScore(key, name, commandOptions) {
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `zscore ${key} ${name}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
+
+	/**
+	 * Constructs a LiteDB 'zQuery' command.
+	 * @param {string} key - The key of the sorted set to query.
+	 * @param {number} score - The score to query the sorted set with.
+	 * @param {string} name - The name of the value to query the sorted set with.
+	 * @param {number} offset - The offset to query the sorted set with.
+	 * @param {number} limit - The limit to query the sorted set with.
+	 * @param {Object} commandOptions - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 */
+	async zQuery(key, score, name, offset, limit, commandOptions) {
+		if (5 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `zquery ${key} ${score} ${name} ${offset} ${limit}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		return this.sendCmd(command);
+	}
 }
 
 // test the client
@@ -196,7 +723,7 @@ let cmd2 = {
 	cmdLen: cmdStr2.length,
 };
 
-let cmdStr3 = "keys a";
+let cmdStr3 = "ping";
 let cmd3 = {
 	cmdStr: cmdStr3,
 	cmdLen: cmdStr3.length,
