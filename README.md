@@ -21,7 +21,7 @@ npm install liteDB-node
 
 ### Basic Example:
 
-```
+```js
 import { createClient } from 'litedb-node';
 
 const client = await createClient()
@@ -35,7 +35,7 @@ await client.disconnect();
 
 The above code connects to localhost on port 9255 since no connect options were provided to connect() call, To specify the connection options pass an object:
 
-```
+```js
 const client = await createClient()
   .on('error', err => console.log('Redis Client Error', err))
   .connect({
@@ -50,7 +50,7 @@ To check if the client has sucessfully connected to the db and is ready to used,
 
 litedb-node supports all litedb commands with some additions: [supported commands](#supported-commands), command options are passed in as an object after the command args:
 
-```
+```js
 await client.set('key', 'value', {
     //specifies the time to live for the key
     ttl: 10,
@@ -60,7 +60,7 @@ await client.set('key', 'value', {
 
 All replies from the server are turned into useful data structures:
 
-```
+```js
 await client.set('setKey','setValue') // null
 await client.hGetAll('hash'); // { field1: 'value1', field2: 'value2' }
 await client.keys() ; // ['setKey', 'hash']
@@ -71,7 +71,7 @@ await client.keys() ; // ['setKey', 'hash']
 
 Disconneting from the server is simple:
 
-```
+```js
 await client.disconnect()
 ```
 
@@ -83,7 +83,7 @@ liteDB-node supports all liteDB commands with some additions:
 
 -hSetObject sets the key-value pairs of a javascript object to a liteDB hash. ex:
 
-```
+```js
 
 hSetObject("key", {
 a: "1",
@@ -97,7 +97,7 @@ c : "2"
 
 -**Auto-Pipelining**: All commands made in the same cycle are automatically pipelined. For example,
 
-```
+```js
 
 client.set("key", "value")
 client.get("key")
