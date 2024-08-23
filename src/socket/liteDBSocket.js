@@ -1,15 +1,15 @@
 // create a tcp socket with some additional functionality for the liteDB client
 
 /**
- * @typedef {import('./types.js').ConnectOptions} ConnectOptions
- * @typedef {import('./types.js').LiteDBCommand} LiteDBCommand
+ * @typedef {import('../types.js').ConnectOptions} ConnectOptions
+ * @typedef {import('../types.js').LiteDBCommand} LiteDBCommand
  */
 
 import { EventEmitter } from "events";
 import { Socket } from "net";
 import { Buffer } from "buffer";
 
-import { MAX_MESSAGE_SIZE } from "./protocol.js";
+import { MAX_MESSAGE_SIZE } from "../protocol.js";
 
 export class LiteDBSocket extends EventEmitter {
 	/**

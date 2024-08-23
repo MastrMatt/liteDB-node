@@ -7,13 +7,13 @@
 // 5) Then the user can await the cmd call ex:  await dbClient.set("key", "value)
 
 import { Yallist } from "yallist";
-import { CMDQUEUEMAXSIZE } from "./protocol.js";
+import { CMDQUEUEMAXSIZE } from "../protocol.js";
 
 /**
- * @typedef {import('./types.d.ts').CommandWaitingToBeSent} CommandWaitingToBeSent
- * @typedef {import('./types.d.ts').CommandWaitingForReply} CommandWaitingForReply
- * @typedef {import('./types.d.ts').LiteDBCommand} LiteDBCommand
- * @typedef {import('./types.d.ts').ResponseData} ResponseData
+ * @typedef {import('../types.js').CommandWaitingToBeSent} CommandWaitingToBeSent
+ * @typedef {import('../types.js').CommandWaitingForReply} CommandWaitingForReply
+ * @typedef {import('../types.js').LiteDBCommand} LiteDBCommand
+ * @typedef {import('../types.js').ResponseData} ResponseData
  */
 
 export class CommandQueue {

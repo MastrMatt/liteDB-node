@@ -17,9 +17,9 @@ import {
 } from "./protocol.js";
 
 import { EventEmitter } from "events";
-import { CommandQueue } from "./commandQueue.js";
-import { LiteDBSocket } from "./liteDBSocket.js";
-import { LiteDBDecoder } from "./decoder.js";
+import { CommandQueue } from "./commandQueue/commandQueue.js";
+import { LiteDBSocket } from "./socket/liteDBSocket.js";
+import { LiteDBDecoder } from "./decoder/decoder.js";
 import { concatCommandOptions, arrayToObject } from "./utils.js";
 
 /**

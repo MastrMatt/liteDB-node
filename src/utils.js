@@ -4,7 +4,7 @@
  * @param {Object} commandOptions
  * @returns {string} The new command string with the options appended
  */
-export function concatCommandOptions(cmdStr, commandOptions) {
+function concatCommandOptions(cmdStr, commandOptions) {
 	Object.entries(commandOptions).forEach(([key, value]) => {
 		cmdStr += ` ${key}=${value}`;
 	});
@@ -17,7 +17,7 @@ export function concatCommandOptions(cmdStr, commandOptions) {
  *
  * @param {Array<string>} arr
  */
-export function arrayToObject(arr) {
+function arrayToObject(arr) {
 	/** @type any */
 	let obj = {};
 
@@ -30,3 +30,5 @@ export function arrayToObject(arr) {
 
 	return obj;
 }
+
+export { concatCommandOptions, arrayToObject };

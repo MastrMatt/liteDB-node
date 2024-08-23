@@ -22,14 +22,14 @@ npm install liteDB-node
 ### Basic Example:
 
 ```js
-import { createClient } from 'litedb-node';
+import { createClient } from "litedb-node";
 
 const client = await createClient()
-  .on('error', err => console.log('Redis Client Error', err))
-  .connect();
+	.on("error", (err) => console.log("Redis Client Error", err))
+	.connect();
 
-await client.set('key', 'value');
-const value = await client.get('key');
+await client.set("key", "value");
+const value = await client.get("key");
 await client.disconnect();
 ```
 
@@ -51,20 +51,18 @@ To check if the client has sucessfully connected to the db and is ready to used,
 litedb-node supports all litedb commands with some additions: [supported commands](#supported-commands), command options are passed in as an object after the command args:
 
 ```js
-await client.set('key', 'value', {
-    //specifies the time to live for the key
-    ttl: 10,
+await client.set("key", "value", {
+	//specifies the time to live for the key
+	ttl: 10,
 });
-
 ```
 
 All replies from the server are turned into useful data structures:
 
 ```js
-await client.set('setKey','setValue') // null
-await client.hGetAll('hash'); // { field1: 'value1', field2: 'value2' }
-await client.keys() ; // ['setKey', 'hash']
-
+await client.set("setKey", "setValue"); // null
+await client.hGetAll("hash"); // { field1: 'value1', field2: 'value2' }
+await client.keys(); // ['setKey', 'hash']
 ```
 
 ### Disconnect
@@ -72,7 +70,7 @@ await client.keys() ; // ['setKey', 'hash']
 Disconneting from the server is simple:
 
 ```js
-await client.disconnect()
+await client.disconnect();
 ```
 
 -The disconnect function waits for all commands that have been initiated to be fully processed and thier responses returned from the server. Then socket socketion is closed. If the disconnection was sucessful a close event is emitted
@@ -84,13 +82,11 @@ liteDB-node supports all liteDB commands with some additions:
 -hSetObject sets the key-value pairs of a javascript object to a liteDB hash. ex:
 
 ```js
-
 hSetObject("key", {
-a: "1",
-b: "2",
-c : "2"
-})
-
+	a: "1",
+	b: "2",
+	c: "2",
+});
 ```
 
 ## Key features
@@ -98,10 +94,8 @@ c : "2"
 -**Auto-Pipelining**: All commands made in the same cycle are automatically pipelined. For example,
 
 ```js
-
-client.set("key", "value")
-client.get("key")
-
+client.set("key", "value");
+client.get("key");
 ```
 
 -**Event-driven Architecture** : Built on top of Node.js's EventEmitter class, allowing for easy integration with other parts of your application.
@@ -110,7 +104,7 @@ client.get("key")
 
 ## Events
 
-The liteDB client is a Node.js EventEmitter, therefore here are some events it emits:
+The liteDB client is a Node.js EventEmitter, therefore it emits events:
 
 | Name    | Trigger                                                                     | Listener Args  |
 | ------- | --------------------------------------------------------------------------- | -------------- |

@@ -1,6 +1,6 @@
-import { SER_VALUES } from "./protocol.js";
+import { SER_VALUES } from "../protocol.js";
 
-/** @typedef {import('./types.d.ts').ResponseData} ResponseData */
+/** @typedef {import('../types.js').ResponseData} ResponseData */
 
 class LiteDBDecoder {
 	constructor() {
