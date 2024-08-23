@@ -9,7 +9,7 @@ class LiteDBDecoder {
 	}
 
 	/**
-	 * Adds data to the internal buffer
+	 * Adds data to the decoder buffer
 	 * @param {Buffer} data
 	 *
 	 */

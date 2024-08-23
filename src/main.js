@@ -5,11 +5,9 @@
 // 5) don't forgot to generate the .d.ts to support library users who use typescript
 // See how to store objects in the db, hashSet or a string as json.stringify?
 
-// ! Work on testing and documentation, may need to refactor some code to make it more testable if time permits
+// Todo:  Work on testing and documentation, may need to refactor some code to make it more testable if time permits, unit test utils,commandqueue,decoder, integration test the rest
 
-// !Implement a way to close the client, make sure to flush the command queue and close the socket
-
-// ! Might move the decoder to the commandQueue, since the commandQueue is the one that is responsible for processing the commands
+// Todo: Deploy to npm
 
 import {
 	DEFAULT_SERVERPORT,
@@ -70,9 +68,6 @@ class liteDBClient extends EventEmitter {
 			.on("close", () => {
 				this.emit("close");
 			})
-			.on("end", () => {
-				this.emit("end");
-			})
 			.on("error", (err) => {
 				this.emit("error", err);
 			})
@@ -105,7 +100,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *  Ticks the command queue to send the next command to the server
+	 *  Removes as many commands are possible from the waiting to be sent queue and sends it to the server
 	 *
 	 * @returns {void}
 	 *
@@ -1040,7 +1035,3 @@ console.log(await client.zQuery("zset", 1, "one", 0, 100));
 console.log(await client.hGetAll("test"));
 await client.disconnect();
 await client.connect();
-
-// All set commands overwrite the previous value if it exists on default except for send
-
-// disconnect waits for the command queue to fully flush before closing the socket, when disconnect is sucessful a close event is emitted

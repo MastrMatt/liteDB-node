@@ -66,9 +66,6 @@ export class LiteDBSocket extends EventEmitter {
 					})
 					.on("close", (hadError) => {
 						this.emit("close", hadError);
-					})
-					.on("end", () => {
-						this.emit("end");
 					});
 			});
 		});
