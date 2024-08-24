@@ -8,7 +8,19 @@ The Node.js client for LiteDB facilitates communication between your application
 
 ## Getting Started
 
-1. Install and run an instance of the [liteDB](https://github.com/MastrMatt/liteDB) server
+1. Spin up a liteDB server
+
+If docker is installed locally, run:
+
+```bash
+
+docker run -p your_desired_port_number:9255 -it mastrmatt/litedb:latest
+
+```
+
+(Make sure to shutdown the docker containers after you are done using them.)
+
+Else, view [liteDB](https://github.com/MastrMatt/liteDB) for spinning up a new server
 
 2. Install liteDB-node in your Node.js application
 

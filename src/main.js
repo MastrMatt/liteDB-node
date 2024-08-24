@@ -2,8 +2,9 @@
 // 2) Look into asyc/await and promises when sending commands to the db server, want to be able to send and then await the response
 // 3) Add pipeline support to the db client
 // 4) Take another look at how node-redis works, will be similar to that
-// 5) don't forgot to generate the .d.ts to support library users who use typescript
-// See how to store objects in the db, hashSet or a string as json.stringify?
+// todo : 5) don't forgot to generate the .d.ts to support library users who use typescript
+
+// todo: Setup workflows for CI/CD and npm
 
 // Todo:  Work on testing and documentation, may need to refactor some code to make it more testable if time permits, unit test utils,commandqueue,decoder, integration test the rest
 
@@ -20,7 +21,7 @@ import { EventEmitter } from "events";
 import { CommandQueue } from "./commandQueue/commandQueue.js";
 import { LiteDBSocket } from "./socket/liteDBSocket.js";
 import { LiteDBDecoder } from "./decoder/decoder.js";
-import { concatCommandOptions, arrayToObject } from "./utils.js";
+import { concatCommandOptions, arrayToObject } from "./utils/utils.js";
 
 /**
  * @typedef {import('./types.js').ClientOptions} ClientOptions
@@ -1021,17 +1022,19 @@ class liteDBClient extends EventEmitter {
 }
 
 // test the client
-const client = await createClient()
-	.on("error", (err) => {
-		// print the error
-		console.error(err);
-	})
-	.connect();
+// const client = await createClient()
+// 	.on("error", (err) => {
+// 		// print the error
+// 		console.error(err);
+// 	})
+// 	.connect();
 
-await client.hSetObject("test", { a: 1, b: 2, c: 3 });
-await client.zAdd("zset", 1, "one");
-await client.zAdd("zset", 2, "two");
-console.log(await client.zQuery("zset", 1, "one", 0, 100));
-console.log(await client.hGetAll("test"));
-await client.disconnect();
-await client.connect();
+// await client.hSetObject("test", { a: 1, b: 2, c: 3 });
+// await client.zAdd("zset", 1, "one");
+// await client.zAdd("zset", 2, "two");
+// console.log(await client.zQuery("zset", 1, "one", 0, 100));
+// console.log(await client.hGetAll("test"));
+// await client.disconnect();
+// await client.connect();
+
+export { createClient };

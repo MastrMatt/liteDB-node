@@ -127,7 +127,7 @@ export class LiteDBSocket extends EventEmitter {
 	disconnect() {
 		if (!this.isReady) {
 			throw new Error(
-				"Want to disconnected but not connected to the server"
+				"Want to disconnect but not connected to the server"
 			);
 		}
 
