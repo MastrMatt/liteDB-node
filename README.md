@@ -127,7 +127,6 @@ The liteDB client is a Node.js EventEmitter, therefore it emits events:
 ## Planned Features
 
 -   Create some simulated ORM (liteDB is not relational but can simulate a relational db)
--   Integrate Docker into the build and deploy step
 
 ## Author
 
@@ -145,7 +144,3 @@ This project is licensed under the [MIT License](LICENSE).
 ## Contributing
 
 Contributions to this project are welcome Please submit pull requests or open issues to discuss potential improvements or report bugs.
-
-```
-
-```
