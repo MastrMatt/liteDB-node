@@ -985,7 +985,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * General query command meant to combine various typical Redis sorted cmds into one. ZrangeByScore: ZQUERY with (key score "" offset limit), Zrange by rank: ZQUERY with (key -inf "" offset limit). Returns all the elements that match the query.
+	 * General query command meant to combine various typical Redis sorted cmds into one. ZrangeByScore: ZQUERY with (key score "" offset limit), Zrange by rank: ZQUERY with (key -Infinity '""' offset limit). Returns all the elements that match the query.
 	 *
 	 * @param {string} key - The key of the sorted set to query.
 	 * @param {number} score - The score to query the sorted set with.

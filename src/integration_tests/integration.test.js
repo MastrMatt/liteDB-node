@@ -1,28 +1,11 @@
+// If running locally, make sure to have the docker server running, github actions will start up the docker server before running the tests
+
 import { createClient, LiteDBClient } from "../main.js";
-import { execSync } from "child_process";
-
-const docker_start_cmd =
-	"docker run -p 9255:9255 -d --name litedb-test-server mastrmatt/litedb:latest";
-
-const docker_stop_cmd = "docker stop litedb-test-server";
-
-const docker_rm_cmd = "docker rm litedb-test-server";
 
 describe("Integration tests", () => {
 	let client = createClient();
 
 	beforeAll(async () => {
-		// start the server
-		try {
-			execSync(docker_start_cmd);
-			console.log("Server started");
-		} catch (err) {
-			throw new Error(
-				"Unable to excute the command to start the docker server"
-			);
-		}
-		// wait for the server to start
-		await new Promise((resolve) => setTimeout(resolve, 4000));
 		// connect to the server
 		try {
 			await client.connect();
@@ -37,18 +20,6 @@ describe("Integration tests", () => {
 	});
 	afterAll(async () => {
 		await client.disconnect();
-		// stop the server
-		try {
-			execSync(docker_stop_cmd);
-		} catch (err) {
-			throw new Error("Unable to stop the docker server");
-		}
-		// remove container from docker
-		try {
-			execSync(docker_rm_cmd);
-		} catch (err) {
-			throw new Error("Unable to remove the docker server");
-		}
 	});
 
 	test("connect to server", async () => {
@@ -109,5 +80,121 @@ describe("Integration tests", () => {
 		expect(value).toEqual(["value1"]);
 		value = await client.lRange("list", 1, 1);
 		expect(value).toEqual(["value2"]);
+	});
+
+	test("LPOP and RPOP", async () => {
+		await client.lPush("list", "value1");
+		await client.rPush("list", "value2");
+		await client.rPush("list", "value3");
+
+		let value = await client.lPop("list");
+		expect(value).toBe(1);
+
+		value = await client.lRange("list", 0, 0);
+		expect(value).toEqual(["value2"]);
+
+		value = await client.rPop("list");
+		expect(value).toBe(1);
+
+		value = await client.lRange("list", 0, 0);
+		expect(value).toEqual(["value2"]);
+
+		value = await client.lLen("list");
+		expect(value).toBe(1);
+	});
+
+	test("LLEN", async () => {
+		await client.lPush("list", "value1");
+		await client.rPush("list", "value2");
+		let value = await client.lLen("list");
+		expect(value).toBe(2);
+	});
+
+	test("LRANGE", async () => {
+		await client.lPush("list", "value1");
+		await client.rPush("list", "value2");
+		await client.rPush("list", "value3");
+		let value = await client.lRange("list", 1, 2);
+		expect(value).toEqual(["value2", "value3"]);
+	});
+
+	test("lTrim", async () => {
+		await client.lPush("list", "value1");
+		await client.rPush("list", "value2");
+		await client.rPush("list", "value3");
+		await client.rPush("list", "value4");
+		await client.lTrim("list", 1, 2);
+		let value = await client.lRange("list", 0, 1);
+		expect(value).toEqual(["value2", "value3"]);
+	});
+
+	test("lSet", async () => {
+		await client.lPush("list", "value1");
+		await client.rPush("list", "value2");
+		await client.rPush("list", "value3");
+		await client.lSet("list", 1, "value4");
+		await client.lSet("list", 2, "value5");
+
+		let value = await client.lRange("list", 0, 2);
+		expect(value).toEqual(["value1", "value4", "value5"]);
+	});
+
+	test("zAdd and zQuery", async () => {
+		await client.zAdd("zset", 1, "value1");
+		await client.zAdd("zset", 2, "value2");
+		await client.zAdd("zset", 3, "value3");
+		let value = await client.zQuery("zset", 1, "value1", 0, 1);
+		expect(value).toEqual({
+			value1: 1,
+		});
+
+		value = await client.zQuery("zset", 1, "value1", 0, 2);
+		expect(value).toEqual({
+			value1: 1,
+			value2: 2,
+		});
+
+		value = await client.zQuery("zset", 1, "value1", 0, 3);
+		expect(value).toEqual({
+			value1: 1,
+			value2: 2,
+			value3: 3,
+		});
+
+		//zQuery by score
+		value = await client.zQuery("zset", 1, '""', 0, 2);
+		expect(value).toEqual({
+			value1: 1,
+			value2: 2,
+		});
+
+		//zQuery by rank
+		value = await client.zQuery("zset", -Infinity, '""', 1, 2);
+
+		expect(value).toEqual({
+			value2: 2,
+			value3: 3,
+		});
+	});
+
+	test("zRem", async () => {
+		await client.zAdd("zset", 1, "value1");
+		await client.zAdd("zset", 2, "value2");
+		await client.zAdd("zset", 3, "value3");
+		let value = await client.zRem("zset", "value2");
+		expect(value).toBe(1);
+
+		value = await client.zQuery("zset", 1, "value1", 0, 2);
+		expect(value).toEqual({
+			value1: 1,
+			value3: 3,
+		});
+	});
+
+	test("zScore", async () => {
+		await client.zAdd("zset", 1, "value1");
+
+		let value = await client.zScore("zset", "value1");
+		expect(value).toBe(1);
 	});
 });

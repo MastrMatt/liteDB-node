@@ -15,4 +15,11 @@ jobs:
               with:
                   node-version: 20
             - run: npm ci
-            - run: npm run test
+            - name: Start Docker Server
+              run: docker run -d -p 9255:9255 --name litedb mastrmatt/litedb:latest
+            - name: Wait for Docker Server to be ready
+              run: |
+                  sleep 10
+            - run: npm test
+            - name: Stop Docker Server
+              run: docker stop litedb && docker rm litedb
