@@ -1,10 +1,10 @@
 # liteDB-node
 
-liteDB-node is a Node.js client for the [liteDB](https://github.com/MastrMatt/liteDB) server.
+liteDB-node is a Node.js client for the [liteDB](https://github.com/MastrMatt/liteDB) database.
 
 ## Overview
 
-The Node.js client for LiteDB facilitates communication between your applications and the LiteDB server. It handles the serialization and deserialization of commands and responses according to the LiteDB protocol, providing a seamless integration experience.
+The Node.js client for liteDB facilitates communication between your applications and the LiteDB server. It handles the serialization and deserialization of commands and responses according to the LiteDB protocol.
 
 ## Getting Started
 
@@ -18,14 +18,12 @@ docker run -p your_desired_port_number:9255 -it mastrmatt/litedb:latest
 
 ```
 
-(Make sure to shutdown the docker containers after you are done using them.)
-
 Else, view [liteDB](https://github.com/MastrMatt/liteDB) for spinning up a new server
 
 2. Install liteDB-node in your Node.js application
 
 ```
-npm install liteDB-node
+npm install litedb-node
 
 ```
 
@@ -56,7 +54,7 @@ const client = await createClient()
   });
 ```
 
-To check if the client has sucessfully connected to the db and is ready to used, acess the property `client.isReady`
+To check if the client has sucessfully connected to the liteDB database and is ready to be used, acess the property `client.isReady`, or simply await the promise as shown above.
 
 ### Commands
 
@@ -73,6 +71,11 @@ All replies from the server are turned into useful data structures:
 
 ```js
 await client.set("setKey", "setValue"); // null
+await client.hSetObject("hash", {
+	field1: "value1",
+	field2: "value2",
+}); //null
+
 await client.hGetAll("hash"); // { field1: 'value1', field2: 'value2' }
 await client.keys(); // ['setKey', 'hash']
 ```

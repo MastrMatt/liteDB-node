@@ -33,13 +33,13 @@ import { concatCommandOptions, arrayToObject } from "./utils/utils.js";
 /**
  * Creates a new instance of the liteDB client
  * @param {ClientOptions} [clientOptions] - The options to use when creating the client
- * @returns {liteDBClient}
+ * @returns {LiteDBClient}
  */
 function createClient(clientOptions) {
-	return new liteDBClient(clientOptions);
+	return new LiteDBClient(clientOptions);
 }
 
-class liteDBClient extends EventEmitter {
+class LiteDBClient extends EventEmitter {
 	/**
 	 * @param {ClientOptions} [clientOptions]
 	 * @constructor
@@ -195,6 +195,8 @@ class liteDBClient extends EventEmitter {
 
 	/**
 	 *
+	 *  Parses the response data object that was created by the decoder into usable data structures for javascript
+	 *
 	 * @param {ResponseData} responseData
 	 */
 	parseResponseData(responseData) {
@@ -252,7 +254,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'delete' command.
+	 * Deletes the value specified by key. Returns the amount of keys deleted
 	 *
 	 * @param {string} key - The key of the item to delete.
 	 * @param {Object} [commandOptions] - Additional options for the command.
@@ -287,7 +289,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'keys' command.
+	 * Returns all the key:value pairs in the database
 	 *
 	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
@@ -321,7 +323,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'flushall' command.
+	 * Removes all the key:value pairs in the database. Returns null
 	 *
 	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
@@ -355,7 +357,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	Executes a LiteDB 'get' command.
+	 *	 Get the value of a key, it the key does not exist emit an error. Returns the value
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -388,7 +390,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'set' command.
+	 *  Sets a new key:value pair in the db, it the key already exists emit an error. Returns null
 	 *
 	 * @param {string} key - The key of the item to set.
 	 * @param {*} value - The value to set for the given key.
@@ -423,7 +425,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	Executes a LiteDB 'hset' command.
+	 *	 Sets a field:value pair in the hash specified by key. If the key does not exist, it will create it. It the field already exists, it overrides the previous value. Returns null
 	 *
 	 * @param {string} key
 	 * @param {string} field
@@ -459,6 +461,8 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
+	 * Sets a series of field:value pairs specified by the values object in the hash specified by key. If the key does not exist, it will create it. It any of the fields already exists, it overrides the previous value. Returns null
+	 *
 	 *
 	 * @param {string} key
 	 * @param {Object} values
@@ -478,10 +482,12 @@ class liteDBClient extends EventEmitter {
 				return this.hSet(key, field, value, commandOptions);
 			})
 		);
+
+		return null;
 	}
 
 	/**
-	 * Executes a LiteDB 'hget' command.
+	 * Gets the value of field from the hash specified by key. Returns the value
 	 *
 	 * @param {string} key
 	 * @param {string} field
@@ -516,14 +522,15 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'hdel' command.
+	 *  Deletes a field from the hash specified by key. Returns an integer for how many elements were removed
 	 *
 	 * @param {string} key
+	 * @param {string} field
 	 * @param {Object} [commandOptions]
 	 * @returns {Promise<any>} The constructed command object.
 	 * @throws Will throw an error if too many arguments are passed.
 	 */
-	async hDel(key, commandOptions) {
+	async hDel(key, field, commandOptions) {
 		if (commandOptions === undefined) {
 			commandOptions = {};
 		}
@@ -531,7 +538,7 @@ class liteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `hdel ${key}`;
+		let cmdStr = `hdel ${key} ${field}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -550,7 +557,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'hgetall' command.
+	 * Returns all fields and values of the hash specified by key.
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -591,7 +598,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	Executes a LiteDB 'lpush' command.
+	 *	Adds value to the list specified by key. If key does not exist, a new list is created. Returns an integer for how many elements were added
 	 *
 	 * @param {string} key
 	 * @param {string} value
@@ -626,7 +633,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	Executes a LiteDB 'rpush' command.
+	 *	Adds value to the list specified by key. If key does not exist, a new list is created. Returns an integer for how many elements were added
 	 *
 	 * @param {string} key
 	 * @param {string} value
@@ -661,7 +668,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	Executes a LiteDB 'lpop' command.
+	 *	 Removes and returns the corresponding element of the list specified by key. Returns an integer for how many elements were removed
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -695,7 +702,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	Executes a LiteDB 'rpop' command.
+	 *	 Removes and returns the corresponding element of the list specified by key. Returns an integer for how many elements were removed
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -729,7 +736,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'llen' command.
+	 * Returns the length of the list specified by key
 	 *
 	 * @param {string} key - The key of the list to get the length of.
 	 * @param {Object} [commandOptions] - Additional options for the command.
@@ -763,7 +770,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'lrange' command.
+	 * Returns values from index start up to and including index stop from the list. The list is specified by key.
 	 *
 	 * @param {string} key - The key of the list to get the range of.
 	 * @param {number} start - The start index of the range.
@@ -799,7 +806,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'ltrim' command.
+	 *  Trims a list from index start up to and including index stop. The list is specified by key. Returns null
 	 *
 	 * @param {string} key - The key of the list to get the index of.
 	 * @param {number} start - The start index of the list.
@@ -835,7 +842,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'lset' command.
+	 *  Sets the index of the list to contain value. The list is specified by the key. Returns null
 	 *
 	 * @param {string} key - The key of the list to set the index of.
 	 * @param {number} index - The index of the list to set.
@@ -871,7 +878,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'zadd' command.
+	 * Adds (score, name) to the set specified by key. If the key does not exist, it is created. If (score, name) already exists , it is updated. Returns the number of elements inserted or updated.
 	 *
 	 * @param {string} key - The key of the sorted set to add the value to.
 	 * @param {number} score - The score of the value to add to the sorted set.
@@ -907,7 +914,8 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'zrem' command.
+	 * Removes the element from the sorted set with the specified name. The sorted set is specified by key. Returns the number of elements removed.
+
 	 *
 	 * @param {string} key - The key of the sorted set to remove the value from.
 	 * @param {string} name - The name of the value to remove from the sorted set.
@@ -942,7 +950,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'zscore' command.
+	 * Returns the score of the element with the specified name from the sorted set specified by key.
 	 *
 	 * @param {string} key - The key of the sorted set to get the score of the value from.
 	 * @param {string} name - The name of the value to get the score of from the sorted set.
@@ -977,7 +985,7 @@ class liteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Executes a LiteDB 'zQuery' command.
+	 * General query command meant to combine various typical Redis sorted cmds into one. ZrangeByScore: ZQUERY with (key score "" offset limit), Zrange by rank: ZQUERY with (key -inf "" offset limit). Returns all the elements that match the query.
 	 *
 	 * @param {string} key - The key of the sorted set to query.
 	 * @param {number} score - The score to query the sorted set with.
@@ -1022,14 +1030,19 @@ class liteDBClient extends EventEmitter {
 }
 
 // test the client
-// const client = await createClient()
-// 	.on("error", (err) => {
-// 		// print the error
-// 		console.error(err);
-// 	})
-// 	.connect();
+const client = await createClient()
+	.on("error", (err) => {
+		// print the error
+		console.error(err);
+	})
+	.connect();
 
-// await client.hSetObject("test", { a: 1, b: 2, c: 3 });
+await client.lPush("list", "one");
+await client.rPush("list", "two");
+console.log(await client.lRange("list", 0, 0));
+console.log(await client.lRange("list", 1, 1));
+
+// console.log(await client.hSetObject("test", { a: 1, b: 2, c: 3 }));
 // await client.zAdd("zset", 1, "one");
 // await client.zAdd("zset", 2, "two");
 // console.log(await client.zQuery("zset", 1, "one", 0, 100));
@@ -1037,4 +1050,4 @@ class liteDBClient extends EventEmitter {
 // await client.disconnect();
 // await client.connect();
 
-export { createClient };
+export { createClient, LiteDBClient };
