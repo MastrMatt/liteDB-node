@@ -14,10 +14,14 @@
 
 		"typeRoots": ["./node_modules/@types", "./src/types"],
 
-		"sourceMap": true,
-
+		// "sourceMap": true, don't need this for jsdoc
 		// "sourceMap": true,
-		"outDir": "./dist"
+
+		"outDir": "./dist",
+
+		// declaration files
+		"declaration": true,
+		"declarationMap": true
 	},
 	"include": ["src/**/*", "src/**/*.d.ts"]
 }

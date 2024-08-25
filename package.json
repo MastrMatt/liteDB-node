@@ -1,9 +1,9 @@
 {
 	"name": "litedb-node",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A node.js client for liteDB",
 	"type": "module",
-	"main": "src/main.js",
+	"main": "dist/main.js",
 	"scripts": {
 		"test": "node --experimental-vm-modules node_modules/.bin/jest",
 		"start": "node src/main.js",
@@ -28,5 +28,8 @@
 	},
 	"dependencies": {
 		"yallist": "^5.0.0"
-	}
+	},
+	"files": [
+		"dist/**/*"
+	]
 }
