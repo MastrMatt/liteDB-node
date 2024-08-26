@@ -97,6 +97,17 @@ describe("Integration tests", () => {
 		let value = await client.hGetAll("hash");
 		expect(value).toEqual({ field1: "value1", field2: "value2" });
 	});
+
+	test("LEXISTS", async () => {
+		await client.lPush("list", "value1");
+
+		let falseValue = await client.lExists("list", "value2");
+		let value = await client.lExists("list", "value1");
+
+		expect(falseValue).toBe(0);
+		expect(value).toBe(1);
+	});
+
 	test("LPUSH and RPUSH", async () => {
 		await client.lPush("list", "value1");
 		await client.rPush("list", "value2");

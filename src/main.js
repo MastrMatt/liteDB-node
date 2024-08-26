@@ -692,6 +692,41 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
+	 *	Checks if the value exists in the list specified by key. Returns an integer for how many elements were found
+	 *
+	 * @param {string} key
+	 * @param {string} value
+	 * @param {Object} [commandOptions]
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async lExists(key, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `LEXISTS ${key} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
+	}
+
+	/**
 	 *	Adds value to the list specified by key. If key does not exist, a new list is created. Returns an integer for how many elements were added
 	 *
 	 * @param {string} key
