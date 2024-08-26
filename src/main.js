@@ -254,6 +254,65 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
+	 * Returns a PONG if the server is alive
+	 *
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async ping() {
+		let cmdStr = `PING`;
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
+	}
+
+	/**
+	 * Checks if the specified key exists in the database. Returns 1 if it does else, 0.
+	 *
+	 * @param {string} key - The key of the item to delete.
+	 * @param {Object} [commandOptions] - Additional options for the command.
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async exists(key, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+
+		if (1 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `EXISTS ${key}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
+	}
+
+	/**
 	 * Deletes the value specified by key. Returns the amount of keys deleted
 	 *
 	 * @param {string} key - The key of the item to delete.
@@ -270,7 +329,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `del ${key}`;
+		let cmdStr = `DEL ${key}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -304,7 +363,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = "keys";
+		let cmdStr = "KEYS";
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -338,7 +397,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = "flushall";
+		let cmdStr = "FLUSHALL";
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -371,7 +430,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `get ${key}`;
+		let cmdStr = `GET ${key}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -406,7 +465,42 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `set ${key} ${value}`;
+		let cmdStr = `SET ${key} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
+	}
+
+	/**
+	 * Checks if a field exists in a hash specified by key. Returns an integer response indicating the number of fields found.
+	 *
+	 * @param {string} key
+	 * @param {string} field
+	 * @param {Object} [commandOptions]
+	 * @returns {Promise<any>} The constructed command object.
+	 * @throws Will throw an error if too many arguments are passed.
+	 */
+	async hExists(key, field, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+		if (2 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `HEXISTS ${key} ${field}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -442,7 +536,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `hset ${key} ${field} ${value}`;
+		let cmdStr = `HSET ${key} ${field} ${value}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -503,7 +597,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `hget ${key} ${field}`;
+		let cmdStr = `HGET ${key} ${field}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -538,7 +632,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `hdel ${key} ${field}`;
+		let cmdStr = `HDEL ${key} ${field}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -572,7 +666,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `hgetall ${key}`;
+		let cmdStr = `HGETALL ${key}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -614,7 +708,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `lpush ${key} ${value}`;
+		let cmdStr = `LPUSH ${key} ${value}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -649,7 +743,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `rpush ${key} ${value}`;
+		let cmdStr = `RPUSH ${key} ${value}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -683,7 +777,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `lpop ${key}`;
+		let cmdStr = `LPOP ${key}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -717,7 +811,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `rpop ${key}`;
+		let cmdStr = `RPOP ${key}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -751,7 +845,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `llen ${key}`;
+		let cmdStr = `LLEN ${key}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -787,7 +881,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `lrange ${key} ${start} ${stop}`;
+		let cmdStr = `LRANGE ${key} ${start} ${stop}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -823,7 +917,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `ltrim ${key} ${start} ${stop}`;
+		let cmdStr = `LTRIM ${key} ${start} ${stop}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -859,7 +953,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `lset ${key} ${index} ${value}`;
+		let cmdStr = `LSET ${key} ${index} ${value}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -895,7 +989,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `zadd ${key} ${score} ${name}`;
+		let cmdStr = `ZADD ${key} ${score} ${name}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -931,7 +1025,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `zrem ${key} ${name}`;
+		let cmdStr = `ZREM ${key} ${name}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -966,7 +1060,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `zscore ${key} ${name}`;
+		let cmdStr = `ZSCORE ${key} ${name}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */
@@ -1003,7 +1097,7 @@ class LiteDBClient extends EventEmitter {
 			throw new Error("Too many arguments");
 		}
 
-		let cmdStr = `zquery ${key} ${score} ${name} ${offset} ${limit}`;
+		let cmdStr = `ZQUERY ${key} ${score} ${name} ${offset} ${limit}`;
 		cmdStr = concatCommandOptions(cmdStr, commandOptions);
 
 		/** @type {LiteDBCommand} */

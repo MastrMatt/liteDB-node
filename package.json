@@ -1,11 +1,11 @@
 {
 	"name": "litedb-node",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "A node.js client for liteDB",
 	"type": "module",
 	"main": "dist/main.js",
 	"scripts": {
-		"test": "node --experimental-vm-modules node_modules/.bin/jest",
+		"test": "node --experimental-vm-modules node_modules/.bin/jest src",
 		"start": "node src/main.js",
 		"dev": "nodemon src/main.js"
 	},

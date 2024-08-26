@@ -32,6 +32,22 @@ describe("Integration tests", () => {
 		let testDisconnect = testClient.disconnect();
 		expect(testDisconnect).resolves.toBeUndefined();
 	});
+
+	test("ping", async () => {
+		let value = await client.ping();
+		expect(value).toBe("PONG");
+	});
+
+	test("exists", async () => {
+		await client.set("key", "value");
+
+		let falseValue = await client.exists("key1");
+		let value = await client.exists("key");
+
+		expect(falseValue).toBe(0);
+		expect(value).toBe(1);
+	});
+
 	test("Set and Get", async () => {
 		await client.set("key", "value");
 		let value = await client.get("key");
@@ -55,6 +71,16 @@ describe("Integration tests", () => {
 		let keys = await client.keys();
 		expect(keys).toEqual([]);
 	});
+
+	test("Hexists", async () => {
+		await client.hSet("hash", "field", "value");
+		let falseValue = await client.hExists("hash", "field1");
+		let value = await client.hExists("hash", "field");
+
+		expect(falseValue).toBe(0);
+		expect(value).toBe(1);
+	});
+
 	test("Hset and Hget", async () => {
 		await client.hSet("hash", "field", "value");
 		let value = await client.hGet("hash", "field");
