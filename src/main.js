@@ -1158,25 +1158,4 @@ class LiteDBClient extends EventEmitter {
 	}
 }
 
-// test the client
-const client = await createClient()
-	.on("error", (err) => {
-		// print the error
-		console.error(err);
-	})
-	.connect();
-
-await client.lPush("list", "one");
-await client.rPush("list", "two");
-console.log(await client.lRange("list", 0, 0));
-console.log(await client.lRange("list", 1, 1));
-
-// console.log(await client.hSetObject("test", { a: 1, b: 2, c: 3 }));
-// await client.zAdd("zset", 1, "one");
-// await client.zAdd("zset", 2, "two");
-// console.log(await client.zQuery("zset", 1, "one", 0, 100));
-// console.log(await client.hGetAll("test"));
-// await client.disconnect();
-// await client.connect();
-
 export { createClient, LiteDBClient };
