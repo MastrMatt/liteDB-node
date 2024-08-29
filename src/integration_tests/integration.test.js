@@ -125,13 +125,13 @@ describe("Integration tests", () => {
 		await client.rPush("list", "value3");
 
 		let value = await client.lPop("list");
-		expect(value).toBe(1);
+		expect(value).toBe("value1");
 
 		value = await client.lRange("list", 0, 0);
 		expect(value).toEqual(["value2"]);
 
 		value = await client.rPop("list");
-		expect(value).toBe(1);
+		expect(value).toBe("value3");
 
 		value = await client.lRange("list", 0, 0);
 		expect(value).toEqual(["value2"]);

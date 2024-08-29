@@ -127,6 +127,24 @@ The liteDB client is a Node.js EventEmitter, therefore it emits events:
 | close   | Emitted when the client has sucessfully disconnected from the liteDB server | none           |
 | error   | Emitted when some recoverable error has occured, usually on the server      | (error: Error) |
 
+## Errors
+
+-   All commands that modify the state of the db emit an error response with the corresponding error message if they were unsucessful in doing so.
+
+-   All query commands either return the equivalent empty response ( 0 , []) or the null response if they was an error in retrieving the data.
+
+-   Error evenrs are also emitted for all commands if the format of the command is incorrect or some internal error occurs on the db server.
+
+-   Make sure an event listener for the "error" event is attacted to the liteDBClient, this permits the ability to catch the error events. If this is not done, the emitted erors will not be handled and will thow new Errors. This is the specified behavior of Nodejs Event Emitters [Error Events](https://nodejs.org/api/events.html#error-events)
+
+```js
+import { createClient } from "litedb-node";
+
+const client = await createClient().on("error", (err) =>
+	console.log("Redis Client Error", err)
+); //ensure this error event listener is present
+```
+
 ## Planned Features
 
 -   Create some simulated ORM (liteDB is not relational but can simulate a relational db)
@@ -147,3 +165,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Contributing
 
 Contributions to this project are welcome Please submit pull requests or open issues to discuss potential improvements or report bugs.
+
+```
+
+```

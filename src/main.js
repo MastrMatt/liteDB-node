@@ -348,7 +348,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Returns all the key:value pairs in the database
+	 * Returns an object containing all the key:value pairs in the database
 	 *
 	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.
@@ -416,7 +416,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	 Get the value of a key, it the key does not exist emit an error. Returns the value
+	 *	 Get the value of a key, it the key does not exist return null. Returns the value
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -581,7 +581,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Gets the value of field from the hash specified by key. Returns the value
+	 * Gets the value of field from the hash specified by key. Returns the value. Returns null if the value cannot be found
 	 *
 	 * @param {string} key
 	 * @param {string} field
@@ -651,7 +651,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Returns all fields and values of the hash specified by key.
+	 * Returns an object containing all fields and values of the hash specified by key. If the key does not exist, returns an empty object
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -797,7 +797,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	 Removes and returns the corresponding element of the list specified by key. Returns an integer for how many elements were removed
+	 *	 Removes and returns the corresponding element of the list specified by key. Returns the value removed
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -831,7 +831,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *	 Removes and returns the corresponding element of the list specified by key. Returns an integer for how many elements were removed
+	 *	 Removes and returns the corresponding element of the list specified by key. Returns the value removed
 	 *
 	 * @param {string} key
 	 * @param {Object} [commandOptions]
@@ -899,7 +899,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Returns values from index start up to and including index stop from the list. The list is specified by key.
+	 * Returns values from index start up to and including index stop from the list. Can use negative indexes, The list is specified by key.
 	 *
 	 * @param {string} key - The key of the list to get the range of.
 	 * @param {number} start - The start index of the range.
@@ -935,7 +935,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 *  Trims a list from index start up to and including index stop. The list is specified by key. Returns null
+	 *  Trims a list from index start up to and including index stop. Can use negative indexes, The list is specified by key. Returns null
 	 *
 	 * @param {string} key - The key of the list to get the index of.
 	 * @param {number} start - The start index of the list.
@@ -1079,7 +1079,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Returns the score of the element with the specified name from the sorted set specified by key.
+	 * Returns the score of the element with the specified name from the sorted set specified by key. If the score does not exist, returns null.
 	 *
 	 * @param {string} key - The key of the sorted set to get the score of the value from.
 	 * @param {string} name - The name of the value to get the score of from the sorted set.

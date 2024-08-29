@@ -16,6 +16,7 @@ function concatCommandOptions(cmdStr, commandOptions) {
  *  Converts an array to an object. Assumes the array is in the format [key1, value1, key2, value2, ...]
  *
  * @param {Array<string>} arr
+ * @returns {Object} The object created from the array
  */
 function arrayToObject(arr) {
 	/** @type any */
