@@ -129,7 +129,7 @@ The liteDB client is a Node.js EventEmitter, therefore it emits events:
 
 ## Errors
 
--   All commands that modify the state of the db emit an error response with the corresponding error message if they were unsucessful in doing so.
+-   All command/(s) that modify the state of the db emit an error response with the corresponding error message if they were unsucessful in doing so.
 
 -   All query commands either return the equivalent empty response ( 0 , []) or the null response if they was an error in retrieving the data.
 
