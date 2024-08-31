@@ -140,6 +140,34 @@ describe("Integration tests", () => {
 		expect(value).toBe(1);
 	});
 
+	test("LREM", async () => {
+		await client.lPush("list", "value1");
+		await client.lPush("list", "value1");
+		await client.rPush("list", "value2");
+		await client.rPush("list", "value2");
+		await client.rPush("list", "value1");
+
+		let value = await client.lRem("list", 2, "value1");
+		expect(value).toBe(2);
+
+		let response = await client.lRange("list", 0, 1);
+
+		expect(response).toEqual(["value2", "value2"]);
+
+		value = await client.lRem("list", -1, "value1");
+
+		expect(value).toBe(1);
+
+		response = await client.lRange("list", -1, -1);
+
+		expect(response).toEqual(["value2"]);
+
+		value = await client.lRem("list", 0, "value2");
+
+		expect(value).toBe(2);
+		expect(await client.lLen("list")).toBe(0);
+	});
+
 	test("LLEN", async () => {
 		await client.lPush("list", "value1");
 		await client.rPush("list", "value2");

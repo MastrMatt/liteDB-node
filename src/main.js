@@ -865,6 +865,42 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
+	 *  Removes the first count occurrences of elements equal to value from the list specified by key. Returns an integer response indicating the number of elements removed. If count is 0, all occurrences are removed. If count is negative, elements are removed starting from the tail of the list.
+	 *
+	 * @param {string} key
+	 * @param {number} count
+	 * @param {string} value
+	 *
+	 * @param {Object} [commandOptions]
+	 * @returns {Promise<any>} The constructed command object.
+	 */
+	async lRem(key, count, value, commandOptions) {
+		if (commandOptions === undefined) {
+			commandOptions = {};
+		}
+		if (3 + Object.keys(commandOptions).length > MAX_ARGS) {
+			throw new Error("Too many arguments");
+		}
+
+		let cmdStr = `LREM ${key} ${count} ${value}`;
+		cmdStr = concatCommandOptions(cmdStr, commandOptions);
+
+		/** @type {LiteDBCommand} */
+		const command = {
+			cmdStr,
+			cmdLen: cmdStr.length,
+		};
+
+		const responseData = await this.sendCmd(command);
+
+		try {
+			return this.parseResponseData(responseData);
+		} catch (err) {
+			this.emit("error", err);
+		}
+	}
+
+	/**
 	 * Returns the length of the list specified by key
 	 *
 	 * @param {string} key - The key of the list to get the length of.
