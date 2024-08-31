@@ -348,7 +348,7 @@ class LiteDBClient extends EventEmitter {
 	}
 
 	/**
-	 * Returns an object containing all the key:value pairs in the database
+	 * Returns an object containing all the keys in the database
 	 *
 	 * @param {Object} [commandOptions] - Additional options for the command.
 	 * @returns {Promise<any>} The constructed command object.

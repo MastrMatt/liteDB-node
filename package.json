@@ -1,6 +1,6 @@
 {
 	"name": "litedb-node",
-	"version": "1.0.31",
+	"version": "1.0.41",
 	"description": "A node.js client for liteDB",
 	"type": "module",
 	"main": "dist/main.js",
