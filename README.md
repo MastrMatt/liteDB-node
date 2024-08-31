@@ -88,7 +88,7 @@ Disconneting from the server is simple:
 await client.disconnect();
 ```
 
--The disconnect function waits for all commands that have been initiated to be fully processed and thier responses returned from the server. Then socket socketion is closed. If the disconnection was sucessful a close event is emitted
+-The disconnect function waits for all commands that have been initiated to be fully processed and thier responses returned from the server. Then the connection to the server is closed. If the disconnection was sucessful a close event is emitted
 
 ## Supported Commands
 
@@ -166,6 +166,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 Contributions to this project are welcome Please submit pull requests or open issues to discuss potential improvements or report bugs.
 
-```
-
-```
