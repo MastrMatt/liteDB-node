@@ -141,7 +141,7 @@ The liteDB client is a Node.js EventEmitter, therefore it emits events:
 import { createClient } from "litedb-node";
 
 const client = await createClient().on("error", (err) =>
-	console.log("Redis Client Error", err)
+	console.log("liteDB Client Error", err)
 ); //ensure this error event listener is present
 ```
 
