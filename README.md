@@ -133,7 +133,7 @@ The liteDB client is a Node.js EventEmitter, therefore it emits events:
 
 -   All query commands either return the equivalent empty response ( 0 , []) or the null response if they was an error in retrieving the data.
 
--   Error evenrs are also emitted for all commands if the format of the command is incorrect or some internal error occurs on the db server.
+-   Error events are also emitted for all commands if the format of the command is incorrect or some internal error occurs on the db server.
 
 -   Make sure an event listener for the "error" event is attacted to the liteDBClient, this permits the ability to catch the error events. If this is not done, the emitted erors will not be handled and will throw new Errors. This is the specified behavior of Nodejs Event Emitters [Error Events](https://nodejs.org/api/events.html#error-events)
 
