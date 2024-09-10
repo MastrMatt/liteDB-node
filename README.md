@@ -135,7 +135,7 @@ The liteDB client is a Node.js EventEmitter, therefore it emits events:
 
 -   Error evenrs are also emitted for all commands if the format of the command is incorrect or some internal error occurs on the db server.
 
--   Make sure an event listener for the "error" event is attacted to the liteDBClient, this permits the ability to catch the error events. If this is not done, the emitted erors will not be handled and will thow new Errors. This is the specified behavior of Nodejs Event Emitters [Error Events](https://nodejs.org/api/events.html#error-events)
+-   Make sure an event listener for the "error" event is attacted to the liteDBClient, this permits the ability to catch the error events. If this is not done, the emitted erors will not be handled and will throw new Errors. This is the specified behavior of Nodejs Event Emitters [Error Events](https://nodejs.org/api/events.html#error-events)
 
 ```js
 import { createClient } from "litedb-node";
