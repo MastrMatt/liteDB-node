@@ -1,5 +1,3 @@
-
-
 import {
 	DEFAULT_SERVERPORT,
 	DEFAULT_SERVERIP,
