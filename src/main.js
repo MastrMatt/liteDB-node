@@ -1,14 +1,4 @@
-// 1) Run the db client as an instance of the Event Emitter Class to be able to handle events when the network status changes
-// 2) Look into asyc/await and promises when sending commands to the db server, want to be able to send and then await the response
-// 3) Add pipeline support to the db client
-// 4) Take another look at how node-redis works, will be similar to that
-// todo : 5) don't forgot to generate the .d.ts to support library users who use typescript
 
-// todo: Setup workflows for CI/CD and npm
-
-// Todo:  Work on testing and documentation, may need to refactor some code to make it more testable if time permits, unit test utils,commandqueue,decoder, integration test the rest
-
-// Todo: Deploy to npm
 
 import {
 	DEFAULT_SERVERPORT,
